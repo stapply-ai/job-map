@@ -13,7 +13,10 @@ wheels/
 .cursor
 .vscode
 
-# ashby/*.json
-greenhouse/**/*.json
-lever/**/*.json
-workable/**/*.json
+# Checkpoint files
+**/processed_companies.txt
+
+./ashby/companies/*.json
+./greenhouse/companies/*.json
+./lever/companies/*.json
+./workable/companies/*.json

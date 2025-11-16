@@ -15,8 +15,9 @@ wheels/
 
 # Checkpoint files
 **/processed_companies.txt
+**/last_run.txt
 
-./ashby/companies/*.json
-./greenhouse/companies/*.json
-./lever/companies/*.json
-./workable/companies/*.json
+ashby/companies/**/*.json
+greenhouse/companies/**/*.json
+lever/companies/**/*.json
+workable/companies/**/*.json

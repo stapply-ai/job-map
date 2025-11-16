@@ -8,10 +8,10 @@ import argparse
 from urllib.parse import urlparse
 from pathlib import Path
 from dotenv import load_dotenv
-
+from datetime import datetime, timedelta
 # Use this proxy for all HTTP requests
-# PROXY_URL = "http://core-residential.evomi.com:1000"
-# PROXY_AUTH = aiohttp.BasicAuth("kalilbouz0", "KpJTWgxfN9tqIe52xIsD")
+PROXY_URL = "http://core-residential.evomi.com:1000"
+PROXY_AUTH = aiohttp.BasicAuth("kalilbouz0", "KpJTWgxfN9tqIe52xIsD")
 
 # Import processing function
 import sys
@@ -42,8 +42,8 @@ async def scrape_ashby_jobs(company_slug: str):
 
     connector = aiohttp.TCPConnector(ssl=False)
     async with aiohttp.ClientSession(connector=connector) as session:
-        # async with session.get(url, proxy=PROXY_URL, proxy_auth=PROXY_AUTH) as response:
-        async with session.get(url) as response:
+        async with session.get(url, proxy=PROXY_URL, proxy_auth=PROXY_AUTH) as response:
+        # async with session.get(url) as response:
             if response.status == 404:
                 print(f"Company '{company_slug}' not found (404)")
                 return None, 0
@@ -64,10 +64,48 @@ async def scrape_ashby_jobs(company_slug: str):
     return file_path, len(data.get("jobs", []))
 
 
-async def scrape_all_ashby_jobs():
+async def scrape_all_ashby_jobs(force: bool = False):
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
     csv_path = os.path.join(script_dir, "companies.csv")
+    last_run_path = os.path.join(script_dir, "last_run.txt")
+    last_run = None
+    if os.path.exists(last_run_path):
+        with open(last_run_path, "r") as f:
+            last_run = datetime.strptime(f.read(), "%Y-%m-%d")
+    with open(last_run_path, "w") as f:
+        f.write(datetime.now().strftime("%Y-%m-%d"))
+
+
+    if last_run is not None and last_run > datetime.now() - timedelta(days=1) and not force:
+        # Check if all companies have been scraped in the last 24 hours
+        # Number of companies in the csv should be equal to the number of companies in the companies folder
+        with open(csv_path, "r") as f:
+            reader = csv.reader(f)
+            next(reader)  # Skip header row
+            companies = list(reader)
+        if len(companies) == len(os.listdir(os.path.join(script_dir, "companies"))):
+            print("All companies have been scraped in the last 24 hours, skipping...")
+            return script_dir   
+        else:
+            print("Not all companies have been scraped in the last 24 hours, scraping...")
+            count = 0
+            successful_companies = 0
+            failed_companies = 0
+            for company in companies:
+                company_slug = extract_company_slug(company[0])
+                if not os.path.exists(os.path.join(script_dir, "companies", f"{company_slug}.json")):
+                    print(f"Company {company_slug} has not been scraped in the last 24 hours, scraping...")
+                    result, num_jobs = await scrape_ashby_jobs(company_slug)
+                    if result is not None:
+                        count += num_jobs
+                        successful_companies += 1
+                    else:
+                        failed_companies += 1
+                        print(f"Failed to scrape {company_slug}")
+            print(f"Done! Scraped {count} total jobs from {successful_companies} companies ({failed_companies} failed)")
+            return script_dir
+
     count = 0
     successful_companies = 0
     failed_companies = 0
@@ -101,9 +139,6 @@ async def scrape_all_ashby_jobs():
 
 
 if __name__ == "__main__":
-    # Load environment variables from .env file
-    load_dotenv()
-
     parser = argparse.ArgumentParser(
         description="Scrape Ashby job boards and optionally process to database"
     )
@@ -113,44 +148,15 @@ if __name__ == "__main__":
         help="Company slug to scrape (optional, scrapes all if not provided)",
     )
     parser.add_argument(
-        "--database-url",
-        default=os.getenv("DATABASE_URL"),
-        help="PostgreSQL connection string (default: from DATABASE_URL env var)",
-    )
-    parser.add_argument(
-        "--openai-api-key",
-        default=os.getenv("OPENAI_API_KEY"),
-        help="OpenAI API key (default: from OPENAI_API_KEY env var)",
-    )
-    parser.add_argument(
-        "--scrape-only",
+        "--force",
         action="store_true",
-        help="Only scrape, do not process to database",
+        help="Force re-scrape all companies",
     )
 
     args = parser.parse_args()
 
-    # Run scraping (always fetches fresh data)
     if args.company_slug:
-        # Single company
         result, num_jobs = asyncio.run(scrape_ashby_jobs(args.company_slug))
         script_dir = os.path.dirname(os.path.abspath(__file__))
     else:
-        # All companies
-        script_dir = asyncio.run(scrape_all_ashby_jobs())
-
-    # Process to database if credentials provided and not scrape-only
-    if not args.scrape_only and args.database_url and args.openai_api_key:
-        print("\n" + "=" * 60)
-        print("Processing scraped data to database...")
-        print("=" * 60)
-        companies_folder = os.path.join(script_dir, "companies")
-        process_ashby_companies(
-            database_url=args.database_url,
-            openai_api_key=args.openai_api_key,
-            companies_folder=companies_folder,
-        )
-    elif not args.scrape_only:
-        print(
-            "\n⚠️  Skipping database processing. Provide --database-url and --openai-api-key to process jobs."
-        )
+        script_dir = asyncio.run(scrape_all_ashby_jobs(args.force))

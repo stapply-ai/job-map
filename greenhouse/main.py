@@ -6,6 +6,8 @@ import csv
 import time
 import os
 from urllib.parse import urlparse
+from datetime import datetime, timedelta
+import argparse
 
 
 def extract_company_slug(url: str) -> str:
@@ -54,10 +56,48 @@ async def scrape_greenhouse_jobs(company_slug: str):
     return data, len(data.get("jobs", []))
 
 
-async def scrape_all_greenhouse_jobs():
+async def scrape_all_greenhouse_jobs(force: bool = False):
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
     csv_path = os.path.join(script_dir, "greenhouse_companies.csv")
+    last_run_path = os.path.join(script_dir, "last_run.txt")
+    last_run = None
+    if os.path.exists(last_run_path):
+        with open(last_run_path, "r") as f:
+            last_run = datetime.strptime(f.read(), "%Y-%m-%d")
+    with open(last_run_path, "w") as f:
+        f.write(datetime.now().strftime("%Y-%m-%d"))
+
+    if last_run is not None and last_run > datetime.now() - timedelta(days=1) and not force:
+        # Check if all companies have been scraped in the last 24 hours
+        # Number of companies in the csv should be equal to the number of companies in the companies folder
+        with open(csv_path, "r") as f:
+            reader = csv.reader(f)
+            next(reader)  # Skip header row
+            companies = list(reader)
+        if len(companies) == len(os.listdir(os.path.join(script_dir, "companies"))):
+            print("All companies have been scraped in the last 24 hours, skipping...")
+            return script_dir
+        else:
+            print("Not all companies have been scraped in the last 24 hours, scraping...")
+            count = 0
+            successful_companies = 0
+            failed_companies = 0
+            for company in companies:
+                company_slug = extract_company_slug(company[0])
+                if not os.path.exists(os.path.join(script_dir, "companies", f"{company_slug}.json")):
+                    print(f"Company {company_slug} has not been scraped in the last 24 hours, scraping...")
+                    result, num_jobs = await scrape_greenhouse_jobs(company_slug)
+                    if result is not None:
+                        count += num_jobs
+                        successful_companies += 1
+                    else:
+                        failed_companies += 1
+                        print(f"Failed to scrape {company_slug}")
+            print(f"Done! Scraped {count} total jobs from {successful_companies} companies ({failed_companies} failed)")
+            return script_dir
+
+
     count = 0
     successful_companies = 0
     failed_companies = 0
@@ -91,9 +131,12 @@ async def scrape_all_greenhouse_jobs():
 
 
 if __name__ == "__main__":
-    import sys
+    parser = argparse.ArgumentParser(description="Greenhouse job scraper")
+    parser.add_argument("company_slug", nargs="?", help="Company slug to scrape (optional, scrapes all if not provided)")
+    parser.add_argument("--force", action="store_true", help="Force re-scrape all companies")
+    args = parser.parse_args()
 
-    if len(sys.argv) < 2:
-        asyncio.run(scrape_all_greenhouse_jobs())
+    if args.company_slug:
+        asyncio.run(scrape_greenhouse_jobs(args.company_slug))
     else:
-        asyncio.run(scrape_greenhouse_jobs(sys.argv[1]))
+        asyncio.run(scrape_all_greenhouse_jobs(args.force))

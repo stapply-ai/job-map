@@ -11,11 +11,7 @@ from enum import Enum
 
 class DiscoveryMethod(Enum):
     """Available discovery methods"""
-    ENHANCED = "enhanced"  # Enhanced discovery with SERP API
     SEARXNG = "searxng"  # Self-hosted SearXNG (FREE unlimited)
-    FIRECRAWL = "firecrawl"  # Firecrawl API
-    GOOGLE = "google"  # Google Custom Search (FREE 100/day)
-    OPTIMIZED = "optimized"  # Optimized SERP with caching
     MANUAL = "manual"  # Skip automated discovery
 
 
@@ -89,35 +85,11 @@ PLATFORM_CONFIGS = {
 
 # Discovery method configurations
 DISCOVERY_CONFIGS = {
-    DiscoveryMethod.ENHANCED: {
-        "script": "enhanced_discovery.py",
-        "requires_env": ["SERPAPI_API_KEY"],
-        "cost": "Paid (~$5-20/run)",
-        "speed": "Fast",
-    },
     DiscoveryMethod.SEARXNG: {
         "script": "searxng_discovery.py",
         "requires_env": ["SEARXNG_URL"],
         "cost": "FREE (unlimited)",
         "speed": "Medium",
-    },
-    DiscoveryMethod.FIRECRAWL: {
-        "script": "firecrawl_discovery.py",
-        "requires_env": ["FIRECRAWL_API_KEY"],
-        "cost": "Paid (~$0-3/run)",
-        "speed": "Slow",
-    },
-    DiscoveryMethod.GOOGLE: {
-        "script": "google_custom_search.py",
-        "requires_env": ["GOOGLE_API_KEY", "GOOGLE_CSE_ID"],
-        "cost": "FREE (100/day limit)",
-        "speed": "Fast",
-    },
-    DiscoveryMethod.OPTIMIZED: {
-        "script": "optimized_serp_discovery.py",
-        "requires_env": ["SERPAPI_API_KEY"],
-        "cost": "Paid (~$2-5/run, 75% cheaper)",
-        "speed": "Fast",
     },
     DiscoveryMethod.MANUAL: {
         "script": None,

@@ -30,14 +30,14 @@ def main():
                     url = job.get("hostedUrl", job.get("applyUrl", ""))
                     # Lever uses "text" for title, not "title"
                     title = job.get("text", "")
-                    
+
                     # Lever location is a dict with "name" key
                     location = job.get("location", {})
                     if isinstance(location, dict):
                         location_str = location.get("name", "")
                     else:
                         location_str = str(location)
-                    
+
                     job_rows.append([url, title, location_str, company_name])
 
     print(f"Processed {len(job_rows)} total jobs")
@@ -50,4 +50,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

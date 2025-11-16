@@ -29,6 +29,12 @@ load_dotenv()
 
 # Platform configurations
 PLATFORMS = {
+    "rippling": {
+        "domains": ["ats.rippling.com"],
+        "pattern": r"(https://ats\.rippling\.com/[^/?#]+)",
+        "csv_column": "rippling_url",
+        "output_file": "rippling/rippling_companies.csv",
+    },
     "ashby": {
         "domains": ["jobs.ashbyhq.com"],
         "pattern": r"(https://jobs\.ashbyhq\.com/[^/?#]+)",

@@ -29,14 +29,14 @@ def main():
                     # Workable uses "url" (simple field name)
                     url = job.get("url", "")
                     title = job.get("title", "")
-                    
+
                     # Workable location is a dict with "city" key (not "name")
                     location = job.get("location", {})
                     if isinstance(location, dict):
                         location_str = location.get("city", "")
                     else:
                         location_str = str(location)
-                    
+
                     job_rows.append([url, title, location_str, company_name])
 
     print(f"Processed {len(job_rows)} total jobs")
@@ -49,4 +49,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -62,14 +62,12 @@ PLATFORMS = {
 SEARCH_STRATEGIES = [
     # Basic site search
     lambda domain: f"site:{domain}",
-
     # Job-related searches
     lambda domain: f"site:{domain} careers",
     lambda domain: f"site:{domain} jobs",
     lambda domain: f"site:{domain} hiring",
-    lambda domain: f"site:{domain} \"we're hiring\"",
+    lambda domain: f'site:{domain} "we\'re hiring"',
     lambda domain: f"site:{domain} apply now",
-
     # Role-based searches (helps find niche companies)
     lambda domain: f"site:{domain} software engineer",
     lambda domain: f"site:{domain} product manager",
@@ -77,55 +75,52 @@ SEARCH_STRATEGIES = [
     lambda domain: f"site:{domain} designer",
     lambda domain: f"site:{domain} sales",
     lambda domain: f"site:{domain} marketing",
-    lambda domain: f"site:{domain} \"engineering\"",
-    lambda domain: f"site:{domain} \"product\"",
-    lambda domain: f"site:{domain} \"data\"",
-    lambda domain: f"site:{domain} \"design\"",
-    lambda domain: f"site:{domain} \"sales\"",
-    lambda domain: f"site:{domain} \"marketing\"",
-
+    lambda domain: f'site:{domain} "engineering"',
+    lambda domain: f'site:{domain} "product"',
+    lambda domain: f'site:{domain} "data"',
+    lambda domain: f'site:{domain} "design"',
+    lambda domain: f'site:{domain} "sales"',
+    lambda domain: f'site:{domain} "marketing"',
     # Remote/location searches
     lambda domain: f"site:{domain} remote",
-    lambda domain: f"site:{domain} \"San Francisco\"",
-    lambda domain: f"site:{domain} \"New York\"",
-    lambda domain: f"site:{domain} \"London\"",
-    lambda domain: f"site:{domain} \"Paris\"",
-    lambda domain: f"site:{domain} \"Berlin\"",
-    lambda domain: f"site:{domain} \"Amsterdam\"",
-    lambda domain: f"site:{domain} \"Stockholm\"",
-    lambda domain: f"site:{domain} \"Warsaw\"",
-    lambda domain: f"site:{domain} \"Brussels\"",
-    lambda domain: f"site:{domain} \"Zurich\"",
-    lambda domain: f"site:{domain} \"Delhi\"",
-    lambda domain: f"site:{domain} \"Mumbai\"",
-    lambda domain: f"site:{domain} \"Bangalore\"",
-    lambda domain: f"site:{domain} \"Chennai\"",
-    lambda domain: f"site:{domain} \"Hyderabad\"",
-    lambda domain: f"site:{domain} \"Pune\"",
-    lambda domain: f"site:{domain} \"Kolkata\"",
-    lambda domain: f"site:{domain} \"Jaipur\"",
-    lambda domain: f"site:{domain} \"Singapore\"",
-    lambda domain: f"site:{domain} \"Dubai\"",
-    lambda domain: f"site:{domain} \"Tokyo\"",
-    lambda domain: f"site:{domain} \"Seoul\"",
-    lambda domain: f"site:{domain} \"Hong Kong\"",
-    lambda domain: f"site:{domain} \"Toronto\"",
-    lambda domain: f"site:{domain} \"Montreal\"",
-    lambda domain: f"site:{domain} \"Vancouver\"",
-    lambda domain: f"site:{domain} \"Sydney\"",
-
-    lambda domain: f"site:{domain} \"Europe\"",
-    lambda domain: f"site:{domain} \"Asia\"",
-    lambda domain: f"site:{domain} \"Middle East\"",
-    lambda domain: f"site:{domain} \"North America\"",
-    lambda domain: f"site:{domain} \"South America\"",
-
+    lambda domain: f'site:{domain} "San Francisco"',
+    lambda domain: f'site:{domain} "New York"',
+    lambda domain: f'site:{domain} "London"',
+    lambda domain: f'site:{domain} "Paris"',
+    lambda domain: f'site:{domain} "Berlin"',
+    lambda domain: f'site:{domain} "Amsterdam"',
+    lambda domain: f'site:{domain} "Stockholm"',
+    lambda domain: f'site:{domain} "Warsaw"',
+    lambda domain: f'site:{domain} "Brussels"',
+    lambda domain: f'site:{domain} "Zurich"',
+    lambda domain: f'site:{domain} "Delhi"',
+    lambda domain: f'site:{domain} "Mumbai"',
+    lambda domain: f'site:{domain} "Bangalore"',
+    lambda domain: f'site:{domain} "Chennai"',
+    lambda domain: f'site:{domain} "Hyderabad"',
+    lambda domain: f'site:{domain} "Pune"',
+    lambda domain: f'site:{domain} "Kolkata"',
+    lambda domain: f'site:{domain} "Jaipur"',
+    lambda domain: f'site:{domain} "Singapore"',
+    lambda domain: f'site:{domain} "Dubai"',
+    lambda domain: f'site:{domain} "Tokyo"',
+    lambda domain: f'site:{domain} "Seoul"',
+    lambda domain: f'site:{domain} "Hong Kong"',
+    lambda domain: f'site:{domain} "Toronto"',
+    lambda domain: f'site:{domain} "Montreal"',
+    lambda domain: f'site:{domain} "Vancouver"',
+    lambda domain: f'site:{domain} "Sydney"',
+    lambda domain: f'site:{domain} "Europe"',
+    lambda domain: f'site:{domain} "Asia"',
+    lambda domain: f'site:{domain} "Middle East"',
+    lambda domain: f'site:{domain} "North America"',
+    lambda domain: f'site:{domain} "South America"',
     # Company type searches
     lambda domain: f"site:{domain} startup",
-    lambda domain: f"site:{domain} YC OR \"Y Combinator\"",
+    lambda domain: f'site:{domain} YC OR "Y Combinator"',
     lambda domain: f"site:{domain} series A OR series B",
-    lambda domain: f"site:{domain} \"tech startup\"",
-    lambda domain: f"site:{domain} \"tech company\"",
+    lambda domain: f'site:{domain} "tech startup"',
+    lambda domain: f'site:{domain} "tech company"',
 ]
 
 
@@ -184,15 +179,17 @@ def search_searxng(
     query: str,
     page: int = 1,
     engines: str = "bing,brave,startpage,google",
+    max_retries: int = 3,
 ) -> List[dict]:
     """
-    Perform search using SearXNG instance
+    Perform search using SearXNG instance with retry logic for rate limiting
 
     Args:
         searxng_url: Base URL of SearXNG instance (e.g., http://localhost:8080)
         query: Search query
         page: Page number (default: 1)
         engines: Comma-separated list of search engines to use
+        max_retries: Maximum number of retries for rate-limited requests
 
     Returns:
         List of search results
@@ -208,19 +205,51 @@ def search_searxng(
         "safesearch": 0,  # 0=off, 1=moderate, 2=strict
     }
 
-    try:
-        response = requests.get(endpoint, params=params, timeout=30)
-        response.raise_for_status()
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(endpoint, params=params, timeout=30)
 
-        data = response.json()
-        return data.get("results", [])
+            # Handle rate limiting (429) with exponential backoff
+            if response.status_code == 429:
+                if attempt < max_retries - 1:
+                    # Exponential backoff: 2^attempt seconds (2, 4, 8 seconds)
+                    wait_time = 2 ** (attempt + 1)
+                    print(
+                        f"  ⏳ Rate limited (429), retrying in {wait_time}s... (attempt {attempt + 1}/{max_retries})"
+                    )
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    print(
+                        f"  ⚠️  Rate limited (429) after {max_retries} attempts, skipping this query"
+                    )
+                    return []
 
-    except requests.exceptions.RequestException as e:
-        print(f"  ⚠️  Error querying SearXNG: {e}")
-        return []
-    except Exception as e:
-        print(f"  ⚠️  Unexpected error: {e}")
-        return []
+            response.raise_for_status()
+            data = response.json()
+            return data.get("results", [])
+
+        except requests.exceptions.RequestException as e:
+            # For 429 errors, we already handled above, so this is for other HTTP errors
+            if "429" in str(e) and attempt < max_retries - 1:
+                wait_time = 2 ** (attempt + 1)
+                print(
+                    f"  ⏳ Rate limited, retrying in {wait_time}s... (attempt {attempt + 1}/{max_retries})"
+                )
+                time.sleep(wait_time)
+                continue
+            elif attempt == max_retries - 1:
+                print(f"  ⚠️  Error querying SearXNG: {e}")
+                return []
+            else:
+                # For non-429 errors, don't retry
+                print(f"  ⚠️  Error querying SearXNG: {e}")
+                return []
+        except Exception as e:
+            print(f"  ⚠️  Unexpected error: {e}")
+            return []
+
+    return []
 
 
 def discover_platform(
@@ -268,14 +297,27 @@ def discover_platform(
 
     # Test SearXNG connection
     print(f"\n🔗 Testing connection to {searxng_url}...")
-    test_results = search_searxng(searxng_url, "test", page=1, engines=engines)
+    test_results = search_searxng(
+        searxng_url, "test", page=1, engines=engines, max_retries=5
+    )
     if not test_results:
         print("❌ Failed to connect to SearXNG or no results returned")
-        print("   Make sure:")
-        print("   - SearXNG is running")
-        print("   - JSON format is enabled in settings.yml")
-        print("   - URL is correct in .env")
-        return
+        print(
+            "   This might be due to rate limiting - waiting 10 seconds and trying once more..."
+        )
+        time.sleep(10)
+        test_results = search_searxng(
+            searxng_url, "test", page=1, engines=engines, max_retries=3
+        )
+        if not test_results:
+            print("❌ Still failing. Make sure:")
+            print("   - SearXNG is running")
+            print("   - JSON format is enabled in settings.yml")
+            print("   - URL is correct in .env")
+            print(
+                "   - Rate limiter allows requests (check rate_limit in settings.yml)"
+            )
+            return
     print(f"✅ Connected! Got {len(test_results)} test results")
 
     # Read existing URLs
@@ -286,15 +328,21 @@ def discover_platform(
     total_results_fetched = 0
 
     # Use search strategies
-    strategies_to_use = SEARCH_STRATEGIES if max_queries == -1 else SEARCH_STRATEGIES[:max_queries]
+    strategies_to_use = (
+        SEARCH_STRATEGIES if max_queries == -1 else SEARCH_STRATEGIES[:max_queries]
+    )
 
     for strategy_idx, strategy_func in enumerate(strategies_to_use, 1):
         if max_queries != -1 and queries_used >= max_queries:
-            print(f"\n⚠️  Reached query limit ({max_queries if max_queries != -1 else 'unlimited'})")
+            print(
+                f"\n⚠️  Reached query limit ({max_queries if max_queries != -1 else 'unlimited'})"
+            )
             break
 
         query = strategy_func(config["domains"][0])
-        print(f"\n[Query {queries_used + 1}/{max_queries if max_queries != -1 else 'unlimited'}] {query}")
+        print(
+            f"\n[Query {queries_used + 1}/{max_queries if max_queries != -1 else 'unlimited'}] {query}"
+        )
 
         query_urls = set()
 
@@ -321,8 +369,8 @@ def discover_platform(
                     f"  Page {page}: {len(results)} results, {len(page_urls)} relevant URLs (+{len(new_in_page)} new)"
                 )
 
-                # Small delay to be respectful
-                time.sleep(0.5)
+                # Delay to avoid rate limiting (increased to prevent "too many requests" errors)
+                time.sleep(2.0)  # 2 seconds between pages to avoid rate limiting
 
             except Exception as e:
                 print(f"  ⚠️  Error on page {page}: {e}")
@@ -335,6 +383,12 @@ def discover_platform(
         print(
             f"  Query total: +{len(new_from_query)} new URLs (cumulative: {len(all_urls)})"
         )
+
+        # Delay between queries to avoid rate limiting
+        if strategy_idx < len(strategies_to_use):
+            time.sleep(
+                3.0
+            )  # 3 seconds between queries to avoid "too many requests" errors
 
     # Cost calculation (always $0 for self-hosted)
     print(f"\n📊 Discovery Summary:")
@@ -385,7 +439,7 @@ def discover_all_platforms(
             engines=engines,
         )
         print("=" * 80)
-        time.sleep(2)
+        time.sleep(5)  # Increased delay between platforms to avoid rate limiting
 
     print("\n" + "=" * 80)
     print("✅ All platforms discovered!")

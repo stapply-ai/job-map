@@ -55,7 +55,7 @@ run_with_logging() {
     local script=$2
     local log_file="$LOG_DIR/${platform}_${script}.log"
     
-    log "Starting ${platform}/${script}" >&2
+    log "Starting ${platform}/${script}"
     python "${platform}/${script}" > "$log_file" 2>&1 &
     local pid=$!
     echo $pid  # Only output PID to stdout
@@ -109,6 +109,7 @@ log "Phase 2: Running all export_to_csv.py scripts in parallel..."
 log "═══════════════════════════════════════════════════════════"
 
 PIDS=()
+PID_PLATFORMS=()
 for platform in "${PLATFORMS[@]}"; do
     if [ ! -f "${platform}/export_to_csv.py" ]; then
         error "${platform}/export_to_csv.py not found, skipping..."
@@ -116,6 +117,7 @@ for platform in "${PLATFORMS[@]}"; do
     fi
     pid=$(run_with_logging "$platform" "export_to_csv.py")
     PIDS+=($pid)
+    PID_PLATFORMS+=($platform)
     log "Started ${platform}/export_to_csv.py (PID: $pid)"
 done
 
@@ -129,7 +131,7 @@ log "Waiting for all export scripts to complete..."
 EXPORT_FAILED=0
 for i in "${!PIDS[@]}"; do
     pid=${PIDS[$i]}
-    platform=${PLATFORMS[$i]}
+    platform=${PID_PLATFORMS[$i]}
     if wait $pid; then
         log "✓ ${platform}/export_to_csv.py completed successfully"
     else

@@ -1,53 +1,84 @@
-import os
 import json
-import csv
+import sys
+from pathlib import Path
+
+from pydantic import ValidationError
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from export_utils import generate_job_id, write_jobs_csv  # noqa: E402
+from models.workable import WorkableJob  # noqa: E402
+
+
+def _format_location(job: WorkableJob) -> str:
+    location_parts = [part for part in [job.city, job.state, job.country] if part]
+    if location_parts:
+        return ", ".join(location_parts)
+
+    if job.locations:
+        formatted_locations = []
+        for loc in job.locations:
+            pieces = [loc.city, loc.region, loc.country]
+            formatted = ", ".join(part for part in pieces if part)
+            if formatted:
+                formatted_locations.append(formatted)
+        if formatted_locations:
+            return "; ".join(formatted_locations)
+
+    return ""
 
 
 def main():
-    companies_dir = os.path.join(os.path.dirname(__file__), "companies")
-    jobs_csv_path = os.path.join(os.path.dirname(__file__), "jobs.csv")
+    companies_dir = Path(__file__).resolve().parent / "companies"
+    jobs_csv_path = Path(__file__).resolve().parent / "jobs.csv"
 
     job_rows = []
 
-    if not os.path.exists(companies_dir) or not os.path.isdir(companies_dir):
+    if not companies_dir.exists() or not companies_dir.is_dir():
         print(f"Companies directory does not exist: {companies_dir}")
     else:
-        for filename in os.listdir(companies_dir):
-            if filename.endswith(".json"):
-                company_name = os.path.splitext(filename)[0]
-                json_path = os.path.join(companies_dir, filename)
-                with open(json_path, "r", encoding="utf-8") as f:
-                    try:
-                        data = json.load(f)
-                    except Exception:
-                        # skip files that are not valid JSON
-                        continue
+        for json_file in sorted(companies_dir.glob("*.json")):
+            company_name = json_file.stem
+            try:
+                with open(json_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except json.JSONDecodeError:
+                continue
 
-                    # Workable structure: jobs can be a list directly, or under "jobs" key
-                    job_list = data if isinstance(data, list) else data.get("jobs", [])
-                    if not isinstance(job_list, list):
-                        continue
+            job_list = data if isinstance(data, list) else data.get("jobs", [])
+            if not isinstance(job_list, list):
+                continue
 
-                    for job in job_list:
-                        # Workable uses "url" (simple field name)
-                        url = job.get("url", "")
-                        title = job.get("title", "")
+            for job_data in job_list:
+                try:
+                    job = WorkableJob(**job_data)
+                except ValidationError:
+                    continue
 
-                        # Workable location is a dict with "city" key (not "name")
-                        location = job.get("location", {})
-                        if isinstance(location, dict):
-                            location_str = location.get("city", "")
-                        else:
-                            location_str = str(location)
+                url = job.url or job.shortlink or job.application_url or ""
+                ats_id = (
+                    str(job.code)
+                    if job.code is not None
+                    else (job.shortcode or job.url or "")
+                )
 
-                        job_rows.append([url, title, location_str, company_name])
+                job_rows.append(
+                    {
+                        "url": url,
+                        "title": job.title or "",
+                        "location": _format_location(job),
+                        "company": company_name,
+                        "ats_id": ats_id,
+                        "id": generate_job_id("workable", url, ats_id),
+                    }
+                )
 
     print(f"Processed {len(job_rows)} total jobs")
-
-    with open(jobs_csv_path, "w", encoding="utf-8", newline="") as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["url", "title", "location", "company"])
-        writer.writerows(job_rows)
+    diff_path = write_jobs_csv(jobs_csv_path, job_rows)
+    if diff_path:
+        print(f"Created diff file: {diff_path.name}")
 
 
 if __name__ == "__main__":

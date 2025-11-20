@@ -21,3 +21,10 @@ ashby/companies/**/*.json
 greenhouse/companies/**/*.json
 lever/companies/**/*.json
 workable/companies/**/*.json
+
+logs/
+*.log
+
+**/checkpoint.json
+**/jobs.csv
+**/jobs_diff_*.csv

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Any
 
 
 class Categories(BaseModel):
@@ -17,7 +17,7 @@ class LeverJob(BaseModel):
     descriptionPlain: Optional[str] = None
     description: Optional[str] = None
     id: Optional[str] = None
-    lists: Optional[List] = None
+    lists: Optional[List[Any]] = None
     text: Optional[str] = None
     country: Optional[str] = None
     workplaceType: Optional[str] = None

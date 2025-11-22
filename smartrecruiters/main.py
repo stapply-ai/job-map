@@ -1,4 +1,3 @@
-# workable_scraper.py
 import asyncio
 import argparse
 import csv
@@ -18,10 +17,12 @@ MAX_SCRAPE_DELAY = 3  # seconds
 
 
 def extract_company_slug(url: str) -> str:
-    """Extract company slug from Workable job board URL"""
+    """Extract company slug from SmartRecruiters job board URL"""
     parsed = urlparse(url)
     # Extract the path and remove leading slash
     path = parsed.path.lstrip("/")
+    # Remove trailing slash if present
+    path = path.rstrip("/")
     return path
 
 
@@ -71,7 +72,7 @@ def save_company_data(file_path: str, api_data: dict) -> None:
         json.dump(api_data, f, indent=2)
 
 
-async def scrape_workable_jobs(company_slug: str, force: bool = False):
+async def scrape_company_jobs(company_slug: str, force: bool = False):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     companies_dir = os.path.join(script_dir, "companies")
 
@@ -89,7 +90,7 @@ async def scrape_workable_jobs(company_slug: str, force: bool = False):
             f"Scraped {company_slug} {hours_elapsed:.1f} hours ago. I will not scrape again."
         )
         # Return existing data info with skipped flag
-        num_jobs = len(company_data.get("jobs", []))
+        num_jobs = len(company_data.get("content", []))
         return company_data, num_jobs, False  # False = not scraped (skipped)
 
     # Log decision to scrape
@@ -102,7 +103,7 @@ async def scrape_workable_jobs(company_slug: str, force: bool = False):
     else:
         print(f"Company '{company_slug}' has no last_scraped field. I will scrape.")
 
-    url = f"https://apply.workable.com/api/v1/widget/accounts/{company_slug}"
+    url = f"https://api.smartrecruiters.com/v1/companies/{company_slug}/postings"
     print(f"Fetching {url}...")
 
     connector = aiohttp.TCPConnector(ssl=False)
@@ -128,7 +129,9 @@ async def scrape_workable_jobs(company_slug: str, force: bool = False):
                     # Save with last_scraped timestamp
                     save_company_data(file_path, data)
 
-                    return data, len(data.get("jobs", [])), True  # True = scraped
+                    # SmartRecruiters API returns content in a 'content' field
+                    num_jobs = len(data.get("content", []))
+                    return data, num_jobs, True  # True = scraped
             except (
                 aiohttp.client_exceptions.ClientPayloadError,
                 aiohttp.ClientError,
@@ -147,10 +150,14 @@ async def scrape_workable_jobs(company_slug: str, force: bool = False):
                 attempt += 1
 
 
-async def scrape_all_workable_jobs(force: bool = False):
+async def scrape_all_smartrecruiters_jobs(force: bool = False):
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_path = os.path.join(script_dir, "workable_companies.csv")
+    csv_path = os.path.join(script_dir, "smartrecruiters_companies.csv")
+
+    if not os.path.exists(csv_path):
+        print(f"CSV file not found: {csv_path}")
+        return script_dir
 
     count = 0
     successful_companies = 0
@@ -169,7 +176,7 @@ async def scrape_all_workable_jobs(force: bool = False):
         company_slug = extract_company_slug(company_url)
 
         print(f"\nProcessing company: {company_slug}")
-        data, num_jobs, was_scraped = await scrape_workable_jobs(company_slug, force)
+        data, num_jobs, was_scraped = await scrape_company_jobs(company_slug, force)
 
         if data is not None:
             count += num_jobs
@@ -191,7 +198,7 @@ async def scrape_all_workable_jobs(force: bool = False):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Workable job scraper")
+    parser = argparse.ArgumentParser(description="SmartRecruiters job scraper")
     parser.add_argument(
         "--force", action="store_true", help="Force re-scrape all companies"
     )
@@ -205,9 +212,9 @@ if __name__ == "__main__":
     start_time = time.perf_counter()
     try:
         if args.company_slug:
-            asyncio.run(scrape_workable_jobs(args.company_slug))
+            asyncio.run(scrape_company_jobs(args.company_slug, args.force))
         else:
-            asyncio.run(scrape_all_workable_jobs(args.force))
+            asyncio.run(scrape_all_smartrecruiters_jobs(args.force))
     finally:
         elapsed = time.perf_counter() - start_time
         print(f"Total runtime: {elapsed:.2f} seconds")

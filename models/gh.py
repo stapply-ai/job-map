@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Any, Union
+from typing import List, Optional, Any, Union, Dict
 
 class DataComplianceItem(BaseModel):
     type: Optional[str]
@@ -15,7 +15,7 @@ class Location(BaseModel):
 class MetadataItem(BaseModel):
     id: Optional[int]
     name: Optional[str]
-    value: Optional[List[str]]
+    value: Optional[Union[str, List[str], Dict[str, Any], bool]]
     value_type: Optional[str]
 
 class Department(BaseModel):

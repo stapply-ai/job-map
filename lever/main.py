@@ -5,7 +5,8 @@ import csv
 import json
 import os
 import random
-from datetime import datetime, timedelta
+import time
+from datetime import datetime
 from urllib.parse import urlparse
 
 import aiohttp
@@ -70,10 +71,7 @@ def should_scrape_company(
 def save_company_data(file_path: str, api_data: list) -> None:
     """Save company data with last_scraped timestamp"""
     # Lever returns a list of jobs, so we wrap it in a dict with metadata
-    wrapped_data = {
-        "last_scraped": datetime.now().isoformat(),
-        "jobs": api_data
-    }
+    wrapped_data = {"last_scraped": datetime.now().isoformat(), "jobs": api_data}
     with open(file_path, "w") as f:
         json.dump(wrapped_data, f, indent=2)
 
@@ -97,7 +95,11 @@ async def scrape_lever_jobs(company_slug: str, force: bool = False):
         )
         # Return existing data info with skipped flag
         num_jobs = len(company_data.get("jobs", []))
-        return company_data.get("jobs", []), num_jobs, False  # False = not scraped (skipped)
+        return (
+            company_data.get("jobs", []),
+            num_jobs,
+            False,
+        )  # False = not scraped (skipped)
 
     # Log decision to scrape
     if hours_elapsed is not None:
@@ -190,7 +192,6 @@ async def scrape_all_lever_jobs(force: bool = False):
             failed_companies += 1
             print(f"Failed to scrape {company_slug}")
 
-
     print(
         f"\nDone! Processed {count} total jobs from {successful_companies} companies "
         f"({skipped_companies} skipped, {failed_companies} failed)"
@@ -210,7 +211,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.company_slug:
-        asyncio.run(scrape_lever_jobs(args.company_slug))
-    else:
-        asyncio.run(scrape_all_lever_jobs(args.force))
+    start_time = time.perf_counter()
+    try:
+        if args.company_slug:
+            asyncio.run(scrape_lever_jobs(args.company_slug))
+        else:
+            asyncio.run(scrape_all_lever_jobs(args.force))
+    finally:
+        elapsed = time.perf_counter() - start_time
+        print(f"Total runtime: {elapsed:.2f} seconds")

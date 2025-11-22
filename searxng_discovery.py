@@ -19,11 +19,25 @@ import requests
 import pandas as pd
 import re
 import os
+import shutil
+import tempfile
 from typing import Set, List
 from dotenv import load_dotenv
 import time
 
 load_dotenv()
+
+DEFAULT_ENGINES = (
+    os.getenv("SEARXNG_ENGINES", "bing,brave,qwant,wikipedia").strip()
+    or "bing,brave,qwant,wikipedia"
+)
+
+PRIMARY_ENGINE = DEFAULT_ENGINES.split(",")[0].strip() or "bing"
+
+try:
+    DEFAULT_REQUEST_DELAY = float(os.getenv("SEARXNG_REQUEST_DELAY", "1.0"))
+except (TypeError, ValueError):
+    DEFAULT_REQUEST_DELAY = 1.0
 
 # Platform configurations
 PLATFORMS = {
@@ -62,30 +76,124 @@ PLATFORMS = {
     },
 }
 
-# Search query strategies
 SEARCH_STRATEGIES = [
     # Basic site search
     lambda domain: f"site:{domain}",
-    # Job-related searches
     lambda domain: f"site:{domain} careers",
     lambda domain: f"site:{domain} jobs",
     lambda domain: f"site:{domain} hiring",
     lambda domain: f'site:{domain} "we\'re hiring"',
     lambda domain: f"site:{domain} apply now",
-    # Role-based searches (helps find niche companies)
+    # High-value job roles (people willing to pay)
     lambda domain: f"site:{domain} software engineer",
-    lambda domain: f"site:{domain} product manager",
+    lambda domain: f"site:{domain} ai engineer",
+    lambda domain: f"site:{domain} machine learning",
     lambda domain: f"site:{domain} data scientist",
+    lambda domain: f"site:{domain} data engineer",
+    lambda domain: f"site:{domain} devops",
+    lambda domain: f"site:{domain} cloud engineer",
+    lambda domain: f"site:{domain} security engineer",
+    lambda domain: f"site:{domain} product manager",
     lambda domain: f"site:{domain} designer",
     lambda domain: f"site:{domain} sales",
+    lambda domain: f"site:{domain} enterprise sales",
+    lambda domain: f"site:{domain} account executive",
     lambda domain: f"site:{domain} marketing",
+    lambda domain: f"site:{domain} finance",
+    lambda domain: f"site:{domain} quant",
+    lambda domain: f"site:{domain} trading",
+    lambda domain: f"site:{domain} fintech",
     lambda domain: f'site:{domain} "engineering"',
     lambda domain: f'site:{domain} "product"',
     lambda domain: f'site:{domain} "data"',
-    lambda domain: f'site:{domain} "design"',
-    lambda domain: f'site:{domain} "sales"',
-    lambda domain: f'site:{domain} "marketing"',
-    # Remote/location searches
+    # Remote
+    lambda domain: f"site:{domain} remote",
+    # --- Rich Countries / Wealthy Cities ---
+    # Europe Tier 1
+    lambda domain: f'site:{domain} "Switzerland"',
+    lambda domain: f'site:{domain} "Zurich"',
+    lambda domain: f'site:{domain} "Geneva"',
+    lambda domain: f'site:{domain} "Luxembourg"',
+    lambda domain: f'site:{domain} "Monaco"',
+    lambda domain: f'site:{domain} "Norway"',
+    lambda domain: f'site:{domain} "Oslo"',
+    lambda domain: f'site:{domain} "Denmark"',
+    lambda domain: f'site:{domain} "Copenhagen"',
+    lambda domain: f'site:{domain} "Sweden"',
+    lambda domain: f'site:{domain} "Stockholm"',
+    # Middle East wealthy hubs
+    lambda domain: f'site:{domain} "Dubai"',
+    lambda domain: f'site:{domain} "Abu Dhabi"',
+    lambda domain: f'site:{domain} "Saudi Arabia"',
+    lambda domain: f'site:{domain} "Riyadh"',
+    lambda domain: f'site:{domain} "Qatar"',
+    lambda domain: f'site:{domain} "Doha"',
+    lambda domain: f'site:{domain} "Kuwait"',
+    lambda domain: f'site:{domain} "Bahrain"',
+    # Asia rich hubs
+    lambda domain: f'site:{domain} "Singapore"',
+    lambda domain: f'site:{domain} "Tokyo"',
+    lambda domain: f'site:{domain} "Seoul"',
+    lambda domain: f'site:{domain} "Hong Kong"',
+    # North America rich hubs
+    lambda domain: f'site:{domain} "San Francisco"',
+    lambda domain: f'site:{domain} "Silicon Valley"',
+    lambda domain: f'site:{domain} "Palo Alto"',
+    lambda domain: f'site:{domain} "Seattle"',
+    lambda domain: f'site:{domain} "New York"',
+    lambda domain: f'site:{domain} "Toronto"',
+    lambda domain: f'site:{domain} "Vancouver"',
+    lambda domain: f'site:{domain} "Montreal"',
+    # Australia rich hubs
+    lambda domain: f'site:{domain} "Sydney"',
+    lambda domain: f'site:{domain} "Melbourne"',
+    # Regions
+    lambda domain: f'site:{domain} "Middle East"',
+    lambda domain: f'site:{domain} "Europe"',
+    lambda domain: f'site:{domain} "North America"',
+    lambda domain: f'site:{domain} "Asia"',
+    # --- Startup / VC searches ---
+    lambda domain: f"site:{domain} startup",
+    lambda domain: f'site:{domain} YC OR "Y Combinator"',
+    # Top VCs (A16Z ++)
+    lambda domain: f'site:{domain} "a16z"',
+    lambda domain: f'site:{domain} "Andreessen Horowitz"',
+    lambda domain: f'site:{domain} "Sequoia Capital"',
+    lambda domain: f'site:{domain} "Accel"',
+    lambda domain: f'site:{domain} "Index Ventures"',
+    lambda domain: f'site:{domain} "Benchmark"',
+    lambda domain: f'site:{domain} "Greylock"',
+    lambda domain: f'site:{domain} "Lightspeed"',
+    lambda domain: f'site:{domain} "Founders Fund"',
+    lambda domain: f'site:{domain} "Khosla Ventures"',
+    lambda domain: f'site:{domain} "Tiger Global"',
+    lambda domain: f"site:{domain} series A OR series B",
+    lambda domain: f'site:{domain} "tech startup"',
+    # --- Big Tech / Big Corp Searches ---
+    # FAANG + BigTech patterns
+    lambda domain: f"site:{domain} Google",
+    lambda domain: f"site:{domain} Meta",
+    lambda domain: f"site:{domain} Amazon",
+    lambda domain: f"site:{domain} Apple",
+    lambda domain: f"site:{domain} Microsoft",
+    lambda domain: f"site:{domain} Netflix",
+    lambda domain: f"site:{domain} Tesla",
+    # Enterprise keywords
+    lambda domain: f'site:{domain} "enterprise"',
+    lambda domain: f'site:{domain} "corporate"',
+    lambda domain: f'site:{domain} "global careers"',
+    lambda domain: f'site:{domain} "fortune 500"',
+    lambda domain: f'site:{domain} "multinational"',
+    lambda domain: f'site:{domain} "global offices"',
+    lambda domain: f'site:{domain} "corporate jobs"',
+    # Combined high-paying patterns
+    lambda domain: f'site:{domain} "San Francisco" software engineer',
+    lambda domain: f'site:{domain} "New York" quant',
+    lambda domain: f'site:{domain} "London" fintech',
+    lambda domain: f'site:{domain} "Dubai" software engineer',
+    lambda domain: f'site:{domain} "Singapore" ai engineer',
+    lambda domain: f'site:{domain} "Zurich" finance',
+    lambda domain: f'site:{domain} "Hong Kong" trading',
     lambda domain: f"site:{domain} remote",
     lambda domain: f'site:{domain} "San Francisco"',
     lambda domain: f'site:{domain} "New York"',
@@ -119,12 +227,6 @@ SEARCH_STRATEGIES = [
     lambda domain: f'site:{domain} "Middle East"',
     lambda domain: f'site:{domain} "North America"',
     lambda domain: f'site:{domain} "South America"',
-    # Company type searches
-    lambda domain: f"site:{domain} startup",
-    lambda domain: f'site:{domain} YC OR "Y Combinator"',
-    lambda domain: f"site:{domain} series A OR series B",
-    lambda domain: f'site:{domain} "tech startup"',
-    lambda domain: f'site:{domain} "tech company"',
 ]
 
 
@@ -153,14 +255,58 @@ def standardize_rippling_url(url: str) -> str:
     return url
 
 
+def create_temp_copy(source_path: str) -> str | None:
+    """
+    Create a temporary copy of the given file in the same directory.
+    Returns the path to the copy, or None if copying fails.
+    """
+    temp_path = None
+    try:
+        temp_dir = os.path.dirname(source_path) or "."
+        suffix = os.path.splitext(source_path)[1] or ".tmp"
+        fd, temp_path = tempfile.mkstemp(prefix=".copy_", suffix=suffix, dir=temp_dir)
+        os.close(fd)
+        shutil.copy2(source_path, temp_path)
+        return temp_path
+    except OSError as e:
+        print(f"⚠️  Failed to create temp copy for {source_path}: {e}")
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+        return None
+
+
+def write_dataframe_atomically(df: pd.DataFrame, target_path: str) -> None:
+    """Write DataFrame to CSV via temp file and atomically replace the original."""
+    target_dir = os.path.dirname(target_path) or "."
+    os.makedirs(target_dir, exist_ok=True)
+
+    fd, temp_path = tempfile.mkstemp(prefix=".tmp_", suffix=".csv", dir=target_dir)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as tmp_file:
+            df.to_csv(tmp_file, index=False)
+        os.replace(temp_path, target_path)
+    except Exception:
+        try:
+            os.remove(temp_path)
+        except OSError:
+            pass
+        raise
+
+
 def read_existing_urls(
     csv_file: str, column_name: str, platform_key: str = None
 ) -> Set[str]:
     """Read existing URLs from CSV file"""
     existing_urls: Set[str] = set()
+    temp_copy = None
     if os.path.exists(csv_file):
         try:
-            df = pd.read_csv(csv_file)
+            temp_copy = create_temp_copy(csv_file)
+            read_path = temp_copy or csv_file
+            df = pd.read_csv(read_path)
             urls_to_process = []
             if column_name in df.columns:
                 urls_to_process = df[column_name].dropna().tolist()
@@ -185,6 +331,12 @@ def read_existing_urls(
                 )
         except Exception as e:
             print(f"⚠️  Error reading {csv_file}: {e}")
+        finally:
+            if temp_copy and os.path.exists(temp_copy):
+                try:
+                    os.remove(temp_copy)
+                except OSError:
+                    pass
     return existing_urls
 
 
@@ -223,7 +375,7 @@ def search_searxng(
     searxng_url: str,
     query: str,
     page: int = 1,
-    engines: str = "duckduckgo",
+    engines: str = PRIMARY_ENGINE,
     max_retries: int = 3,
 ) -> List[dict]:
     """
@@ -346,8 +498,9 @@ def search_searxng(
 def discover_platform(
     platform_name: str,
     max_queries: int = 20,
-    pages_per_query: int = 3,
-    engines: str = "duckduckgo",
+    pages_per_query: int = 20,
+    engines: str = DEFAULT_ENGINES,
+    request_delay: float = DEFAULT_REQUEST_DELAY,
 ):
     """
     Discover companies using SearXNG
@@ -356,7 +509,8 @@ def discover_platform(
         platform_name: Platform to discover
         max_queries: Maximum search queries to use (default: unlimited)
         pages_per_query: Pages per query (default: 3)
-        engines: Search engines to use (default: google,duckduckgo,bing)
+        engines: Search engines to use (default pulled from SEARXNG_ENGINES)
+        request_delay: Seconds to wait between page fetches
     """
 
     platform_key = platform_name.lower()
@@ -373,7 +527,10 @@ def discover_platform(
     print(f"📊 Max queries: {max_queries}")
     print(f"📊 Pages per query: {pages_per_query}")
     print(f"🔧 Engines: {engines}")
+    print(f"⏱️ Delay between page requests: {request_delay}s")
     print("=" * 80)
+
+    query_cooldown = max(request_delay, 1.0)
 
     # Check for SearXNG URL
     searxng_url = os.getenv("SEARXNG_URL")
@@ -449,35 +606,24 @@ def discover_platform(
                 total_results_fetched += len(results)
 
                 if not results:
-                    print(
-                        f"  Page {page}: No results (total results fetched: {len(results)})"
-                    )
-                    # Try with Bing as fallback if DuckDuckGo fails
-                    if page == 1 and engines == "duckduckgo":
+                    print(f"  Page {page}: No results returned by engine mix")
+                    if page == 1:
                         print(
-                            "    💡 DuckDuckGo returned no results, trying Bing as fallback..."
+                            f"    💡 Retrying with {PRIMARY_ENGINE} as a fallback engine..."
                         )
-                        results = search_searxng(
-                            searxng_url, query, page=page, engines="bing"
+                        fallback_results = search_searxng(
+                            searxng_url, query, page=page, engines=PRIMARY_ENGINE
                         )
-                        if results:
-                            print(f"    ✅ Got {len(results)} results with Bing")
-                            total_results_fetched += len(results)
-                        else:
-                            print("    ⚠️  Bing also returned no results")
-                            break
-                    elif page == 1 and "," in engines:
-                        # Multiple engines failed, try just DuckDuckGo
-                        print("    💡 All engines failed, trying DuckDuckGo alone...")
-                        results = search_searxng(
-                            searxng_url, query, page=page, engines="duckduckgo"
-                        )
-                        if results:
+                        if fallback_results:
                             print(
-                                f"    ✅ Got {len(results)} results with DuckDuckGo alone"
+                                f"    ✅ Got {len(fallback_results)} results with {PRIMARY_ENGINE}"
                             )
-                            total_results_fetched += len(results)
+                            results = fallback_results
+                            total_results_fetched += len(fallback_results)
                         else:
+                            print(
+                                f"    ⚠️  {PRIMARY_ENGINE} fallback also returned no results"
+                            )
                             break
                     else:
                         break
@@ -505,8 +651,9 @@ def discover_platform(
                     f"  Page {page}: {len(results)} results, {len(page_urls)} relevant URLs (+{len(new_in_page)} new)"
                 )
 
-                # Delay to avoid rate limiting (increased to prevent "too many requests" errors)
-                time.sleep(2.0)  # 2 seconds between pages to avoid rate limiting
+                # Delay to avoid rate limiting (configurable via CLI/env)
+                if request_delay > 0:
+                    time.sleep(request_delay)
 
             except Exception as e:
                 print(f"  ⚠️  Error on page {page}: {e}")
@@ -521,10 +668,8 @@ def discover_platform(
         )
 
         # Delay between queries to avoid rate limiting
-        if strategy_idx < len(strategies_to_use):
-            time.sleep(
-                3.0
-            )  # 3 seconds between queries to avoid "too many requests" errors
+        if strategy_idx < len(strategies_to_use) and query_cooldown > 0:
+            time.sleep(query_cooldown)
 
     print("\n📊 Discovery Summary:")
     print(f"  🔍 Queries used: {queries_used}")
@@ -563,15 +708,16 @@ def discover_platform(
         sorted_urls = sorted(combined_urls)
 
     df = pd.DataFrame({config["csv_column"]: sorted_urls})
-    df.to_csv(config["output_file"], index=False)
+    write_dataframe_atomically(df, config["output_file"])
 
     print(f"\n✅ Saved {len(df)} companies to {config['output_file']}")
 
 
 def discover_all_platforms(
     max_queries_per_platform: int = -1,
-    pages_per_query: int = 3,
-    engines: str = "duckduckgo",
+    pages_per_query: int = 20,
+    engines: str = DEFAULT_ENGINES,
+    request_delay: float = DEFAULT_REQUEST_DELAY,
 ):
     """Discover all platforms using SearXNG"""
 
@@ -580,7 +726,10 @@ def discover_all_platforms(
     print(f"📊 Queries per platform: {max_queries_per_platform}")
     print(f"📊 Pages per query: {pages_per_query}")
     print(f"🔧 Engines: {engines}")
+    print(f"⏱️ Delay between page requests: {request_delay}s")
     print("=" * 80)
+
+    platform_cooldown = max(5.0, request_delay * 4)
 
     for platform_name in PLATFORMS.keys():
         print("\n" + "=" * 80)
@@ -589,9 +738,10 @@ def discover_all_platforms(
             max_queries=max_queries_per_platform,
             pages_per_query=pages_per_query,
             engines=engines,
+            request_delay=request_delay,
         )
         print("=" * 80)
-        time.sleep(5)  # Increased delay between platforms to avoid rate limiting
+        time.sleep(platform_cooldown)
 
     print("\n" + "=" * 80)
     print("✅ All platforms discovered!")
@@ -618,13 +768,19 @@ if __name__ == "__main__":
         help="Maximum queries to use (default: unlimited!)",
     )
     parser.add_argument(
-        "--pages", type=int, default=10, help="Pages per query (default: 10)"
+        "--pages", type=int, default=20, help="Pages per query (default: 20)"
     )
     parser.add_argument(
         "--engines",
         type=str,
-        default="duckduckgo",
-        help="Search engines to use (default: duckduckgo)",
+        default=DEFAULT_ENGINES,
+        help=f"Search engines to use (default: {DEFAULT_ENGINES})",
+    )
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=DEFAULT_REQUEST_DELAY,
+        help=f"Seconds to sleep between page requests (default: {DEFAULT_REQUEST_DELAY})",
     )
 
     args = parser.parse_args()
@@ -634,6 +790,7 @@ if __name__ == "__main__":
             max_queries_per_platform=args.max_queries,
             pages_per_query=args.pages,
             engines=args.engines,
+            request_delay=args.delay,
         )
     else:
         discover_platform(
@@ -641,4 +798,5 @@ if __name__ == "__main__":
             max_queries=args.max_queries,
             pages_per_query=args.pages,
             engines=args.engines,
+            request_delay=args.delay,
         )

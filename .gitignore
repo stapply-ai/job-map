@@ -21,6 +21,7 @@ ashby/companies/**/*.json
 greenhouse/companies/**/*.json
 lever/companies/**/*.json
 workable/companies/**/*.json
+rippling/companies/**/*.json
 
 logs/
 *.log

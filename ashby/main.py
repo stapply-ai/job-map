@@ -7,7 +7,8 @@ import json
 import os
 import random
 import sys
-from datetime import datetime, timedelta
+import time
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -218,7 +219,12 @@ if __name__ == "__main__":
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    if args.company_slug:
-        asyncio.run(scrape_ashby_jobs(args.company_slug))
-    else:
-        script_dir = asyncio.run(scrape_all_ashby_jobs(args.force))
+    start_time = time.perf_counter()
+    try:
+        if args.company_slug:
+            asyncio.run(scrape_ashby_jobs(args.company_slug))
+        else:
+            script_dir = asyncio.run(scrape_all_ashby_jobs(args.force))
+    finally:
+        elapsed = time.perf_counter() - start_time
+        print(f"Total runtime: {elapsed:.2f} seconds")

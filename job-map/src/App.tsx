@@ -7,11 +7,11 @@ import type { JobMarker } from './types';
 import { MAPBOX_TOKEN } from './config';
 import { AIService } from './services/aiService';
 import type { MapControlCallbacks, ViewState } from './utils/mapControl';
+import { Analytics } from '@vercel/analytics/react';
 
 function App() {
   const [jobMarkers, setJobMarkers] = useState<JobMarker[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [loadingStage, setLoadingStage] = useState('Initializing');
   const [error, setError] = useState<string | null>(null);
   const [totalJobsCount, setTotalJobsCount] = useState(0);
   const [filteredJobs, setFilteredJobs] = useState<JobMarker[] | null>(null);
@@ -56,8 +56,7 @@ function App() {
   useEffect(() => {
     async function loadData() {
       try {
-        // Load CSV with coordinates
-        setLoadingStage('Loading jobs data');
+        // Load CSV with coordinates    
         const jobs = await loadJobsWithCoordinates('/jobs_minimal.csv');
         console.log(`Loaded ${jobs.length} jobs with coordinates`);
 
@@ -94,32 +93,12 @@ function App() {
 
   if (error) {
     return (
-      <div style={{
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#0f172a',
-        color: '#ef4444',
-        padding: '20px',
-        textAlign: 'center'
-      }}>
-        <h1 style={{ fontSize: '24px', marginBottom: '16px' }}>Error Loading Data</h1>
-        <p style={{ fontSize: '16px', color: '#94a3b8' }}>{error}</p>
+      <div className="w-screen h-screen flex flex-col items-center justify-center bg-black text-red-500 p-5 text-center">
+        <h1 className="text-2xl mb-4">Error Loading Data</h1>
+        <p className="text-base text-slate-400">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          style={{
-            marginTop: '24px',
-            padding: '12px 24px',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '16px'
-          }}
+          className="mt-6 px-6 py-3 bg-blue-500 text-white border-none rounded-md cursor-pointer text-base hover:bg-blue-400 transition-colors"
         >
           Retry
         </button>
@@ -128,7 +107,7 @@ function App() {
   }
 
   if (initialLoading) {
-    return <LoadingScreen stage={loadingStage} />;
+    return <LoadingScreen />;
   }
 
   // Show chat interface (API key is checked server-side)
@@ -137,6 +116,7 @@ function App() {
 
   return (
     <>
+      <Analytics />
       <JobMap
         jobs={jobMarkers}
         mapboxToken={MAPBOX_TOKEN}

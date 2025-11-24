@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import clsx from 'clsx';
 import { AIService } from '../services/aiService';
 import type { FunctionCallResult } from '../services/aiService';
 
@@ -11,7 +12,7 @@ const StapplyLogo = ({ size = 36 }: { size?: number }) => (
         fill="currentColor"
         role="img"
         aria-label="Stapply logo - stacked documents icon"
-        style={{ display: 'block' }}
+        className="block"
     >
         <rect x="3" y="6" width="14" height="16" rx="2" fill="#3b82f6" opacity="0.3"></rect>
         <rect x="4" y="4" width="14" height="16" rx="2" fill="#3b82f6" opacity="0.8"></rect>
@@ -124,33 +125,16 @@ export function ChatInterface({ aiService, onClose }: ChatInterfaceProps) {
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                style={{
-                    position: 'fixed',
-                    bottom: '24px',
-                    right: '24px',
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '50%',
-                    backgroundColor: '#3b82f6',
-                    border: 'none',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000,
-                    transition: 'all 0.2s',
-                    padding: '0',
-                    overflow: 'hidden',
-                }}
-                onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.1)';
-                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.6)';
-                }}
-                onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)';
-                }}
+                className={clsx(
+                    'fixed bottom-6 right-6 z-1000',
+                    'w-16 h-16 rounded-full',
+                    'bg-blue-500 border-none cursor-pointer',
+                    'shadow-[0_4px_12px_rgba(59,130,246,0.4)]',
+                    'flex items-center justify-center',
+                    'transition-all duration-200',
+                    'p-0 overflow-hidden',
+                    'hover:scale-110 hover:shadow-[0_6px_16px_rgba(59,130,246,0.6)]'
+                )}
             >
                 <StapplyLogo size={40} />
             </button>
@@ -159,48 +143,23 @@ export function ChatInterface({ aiService, onClose }: ChatInterfaceProps) {
 
     return (
         <div
-            style={{
-                position: 'fixed',
-                bottom: '24px',
-                right: '24px',
-                width: '400px',
-                maxWidth: 'calc(100vw - 48px)',
-                height: '580px',
-                maxHeight: 'calc(100vh - 48px)',
-                backgroundColor: '#000000',
-                backdropFilter: 'blur(24px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '16px',
-                display: 'flex',
-                flexDirection: 'column',
-                zIndex: 1000,
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.8)',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", sans-serif',
-                overflow: 'hidden',
-            }}
+            className={clsx(
+                'fixed bottom-6 right-6 z-1000',
+                'w-[400px] max-w-[calc(100vw-48px)]',
+                'h-[580px] max-h-[calc(100vh-48px)]',
+                'bg-black backdrop-blur-2xl',
+                'border border-white/10 rounded-2xl',
+                'flex flex-col',
+                'shadow-[0_8px_32px_rgba(0,0,0,0.8)]',
+                'font-[system-ui,-apple-system,BlinkMacSystemFont,"Inter",sans-serif]',
+                'overflow-hidden'
+            )}
         >
             {/* Header */}
-            <div
-                style={{
-                    padding: '16px 20px',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                }}
-            >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-black/30">
+                <div className="flex items-center gap-2.5">
                     <StapplyLogo size={24} />
-                    <h3
-                        style={{
-                            margin: 0,
-                            fontSize: '15px',
-                            fontWeight: '500',
-                            color: '#ffffff',
-                            letterSpacing: '-0.01em',
-                        }}
-                    >
+                    <h3 className="m-0 text-[15px] font-medium text-white tracking-[-0.01em]">
                         Assistant
                     </h3>
                 </div>
@@ -209,69 +168,27 @@ export function ChatInterface({ aiService, onClose }: ChatInterfaceProps) {
                         setIsOpen(false);
                         onClose?.();
                     }}
-                    style={{
-                        background: 'transparent',
-                        border: 'none',
-                        borderRadius: '6px',
-                        width: '24px',
-                        height: '24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        color: 'rgba(255, 255, 255, 0.4)',
-                        fontSize: '20px',
-                        transition: 'all 0.15s',
-                        lineHeight: '1',
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                        e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.color = 'rgba(255, 255, 255, 0.4)';
-                    }}
+                    className={clsx(
+                        'bg-transparent border-none rounded-md',
+                        'w-6 h-6 flex items-center justify-center',
+                        'cursor-pointer text-white/40 text-xl leading-none',
+                        'transition-all duration-150',
+                        'hover:bg-white/10 hover:text-white/80'
+                    )}
                 >
                     ×
                 </button>
             </div>
 
             {/* Messages */}
-            <div
-                style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    padding: '20px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '16px',
-                    backgroundColor: '#000000',
-                }}
-            >
+            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 bg-black">
                 {messages.length === 0 && (
-                    <div
-                        style={{
-                            color: 'rgba(255, 255, 255, 0.5)',
-                            fontSize: '13px',
-                            textAlign: 'center',
-                            padding: '40px 20px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '12px',
-                        }}
-                    >
+                    <div className="text-white/50 text-[13px] text-center py-10 px-5 flex flex-col items-center gap-3">
                         <StapplyLogo size={32} />
-                        <p style={{ margin: '0', fontWeight: '400', color: 'rgba(255, 255, 255, 0.6)', lineHeight: '1.5' }}>
+                        <p className="m-0 font-normal text-white/60 leading-normal">
                             Ask about jobs or navigate the map
                         </p>
-                        <div style={{
-                            marginTop: '4px',
-                            fontSize: '11px',
-                            color: 'rgba(255, 255, 255, 0.4)',
-                            lineHeight: '1.6',
-                        }}>
+                        <div className="mt-1 text-[11px] text-white/40 leading-relaxed">
                             "Show jobs in San Francisco"<br />
                             "Zoom to New York"
                         </div>
@@ -281,41 +198,24 @@ export function ChatInterface({ aiService, onClose }: ChatInterfaceProps) {
                 {messages.map((message) => (
                     <div
                         key={message.id}
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '8px',
-                            alignItems: message.role === 'user' ? 'flex-end' : 'flex-start',
-                        }}
+                        className={clsx(
+                            'flex flex-col gap-2',
+                            message.role === 'user' ? 'items-end' : 'items-start'
+                        )}
                     >
                         <div
-                            style={{
-                                maxWidth: '85%',
-                                padding: '10px 14px',
-                                borderRadius: message.role === 'user' ? '12px 4px 12px 12px' : '4px 12px 12px 12px',
-                                backgroundColor:
-                                    message.role === 'user'
-                                        ? '#3b82f6'
-                                        : 'rgba(255, 255, 255, 0.08)',
-                                color: '#ffffff',
-                                fontSize: '13px',
-                                lineHeight: '1.5',
-                                wordWrap: 'break-word',
-                            }}
+                            className={clsx(
+                                'max-w-[85%] px-3.5 py-2.5',
+                                'text-white text-[13px] leading-normal wrap-break-word',
+                                message.role === 'user'
+                                    ? 'bg-blue-500 rounded-[12px_4px_12px_12px]'
+                                    : 'bg-white/8 rounded-[4px_12px_12px_12px]'
+                            )}
                         >
                             {message.isLoading ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <div
-                                        style={{
-                                            width: '10px',
-                                            height: '10px',
-                                            border: '1.5px solid rgba(59, 130, 246, 0.3)',
-                                            borderTopColor: '#3b82f6',
-                                            borderRadius: '50%',
-                                            animation: 'spin 0.8s linear infinite',
-                                        }}
-                                    />
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '12px' }}>Thinking...</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2.5 h-2.5 border-[1.5px] border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+                                    <span className="text-white/50 text-xs">Thinking...</span>
                                 </div>
                             ) : (
                                 typeof message.content === 'string' ? (
@@ -324,27 +224,27 @@ export function ChatInterface({ aiService, onClose }: ChatInterfaceProps) {
                                             components={{
                                                 // Headings
                                                 h1: ({ node, ...props }) => (
-                                                    <h1 style={{ fontSize: '18px', fontWeight: '600', margin: '0 0 12px 0', color: '#ffffff', lineHeight: '1.4' }} {...props} />
+                                                    <h1 className="text-lg font-semibold m-0 mb-3 text-white leading-snug" {...props} />
                                                 ),
                                                 h2: ({ node, ...props }) => (
-                                                    <h2 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 10px 0', color: '#ffffff', lineHeight: '1.4' }} {...props} />
+                                                    <h2 className="text-base font-semibold m-0 mb-2.5 text-white leading-snug" {...props} />
                                                 ),
                                                 h3: ({ node, ...props }) => (
-                                                    <h3 style={{ fontSize: '15px', fontWeight: '600', margin: '0 0 8px 0', color: '#ffffff', lineHeight: '1.4' }} {...props} />
+                                                    <h3 className="text-[15px] font-semibold m-0 mb-2 text-white leading-snug" {...props} />
                                                 ),
                                                 // Paragraphs
                                                 p: ({ node, ...props }) => (
-                                                    <p style={{ margin: '0 0 12px 0', color: '#ffffff', lineHeight: '1.6', fontSize: '13px' }} {...props} />
+                                                    <p className="m-0 mb-3 text-white leading-relaxed text-[13px]" {...props} />
                                                 ),
                                                 // Lists
                                                 ul: ({ node, ...props }) => (
-                                                    <ul style={{ margin: '0 0 12px 0', paddingLeft: '20px', color: '#ffffff', fontSize: '13px', lineHeight: '1.6' }} {...props} />
+                                                    <ul className="m-0 mb-3 pl-5 text-white text-[13px] leading-relaxed" {...props} />
                                                 ),
                                                 ol: ({ node, ...props }) => (
-                                                    <ol style={{ margin: '0 0 12px 0', paddingLeft: '20px', color: '#ffffff', fontSize: '13px', lineHeight: '1.6' }} {...props} />
+                                                    <ol className="m-0 mb-3 pl-5 text-white text-[13px] leading-relaxed" {...props} />
                                                 ),
                                                 li: ({ node, ...props }) => (
-                                                    <li style={{ margin: '0 0 6px 0', color: '#ffffff', lineHeight: '1.6' }} {...props} />
+                                                    <li className="m-0 mb-1.5 text-white leading-relaxed" {...props} />
                                                 ),
                                                 // Links
                                                 a: ({ node, ...props }) => (
@@ -352,20 +252,7 @@ export function ChatInterface({ aiService, onClose }: ChatInterfaceProps) {
                                                         {...props}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        style={{
-                                                            color: '#3b82f6',
-                                                            textDecoration: 'underline',
-                                                            textDecorationColor: 'rgba(59, 130, 246, 0.4)',
-                                                            transition: 'all 0.2s',
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.color = '#60a5fa';
-                                                            e.currentTarget.style.textDecorationColor = '#60a5fa';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.color = '#3b82f6';
-                                                            e.currentTarget.style.textDecorationColor = 'rgba(59, 130, 246, 0.4)';
-                                                        }}
+                                                        className="text-blue-500 underline decoration-blue-500/40 transition-all duration-200 hover:text-blue-400 hover:decoration-blue-400"
                                                     />
                                                 ),
                                                 // Code blocks
@@ -373,64 +260,40 @@ export function ChatInterface({ aiService, onClose }: ChatInterfaceProps) {
                                                     if (inline) {
                                                         return (
                                                             <code
-                                                                style={{
-                                                                    backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                                                                    color: '#93c5fd',
-                                                                    padding: '2px 6px',
-                                                                    borderRadius: '4px',
-                                                                    fontSize: '12px',
-                                                                    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-                                                                }}
+                                                                className="bg-blue-500/15 text-blue-300 px-1.5 py-0.5 rounded text-xs font-mono"
                                                                 {...props}
                                                             />
                                                         );
                                                     }
                                                     return (
                                                         <code
-                                                            style={{
-                                                                display: 'block',
-                                                                backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                                                                color: '#e5e7eb',
-                                                                padding: '12px',
-                                                                borderRadius: '8px',
-                                                                fontSize: '12px',
-                                                                fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-                                                                overflow: 'auto',
-                                                                margin: '0 0 12px 0',
-                                                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                                            }}
+                                                            className="block bg-black/40 text-gray-200 p-3 rounded-lg text-xs font-mono overflow-auto m-0 mb-3 border border-white/10"
                                                             {...props}
                                                         />
                                                     );
                                                 },
                                                 // Pre blocks
                                                 pre: ({ node, ...props }) => (
-                                                    <pre style={{ margin: '0 0 12px 0', overflow: 'auto' }} {...props} />
+                                                    <pre className="m-0 mb-3 overflow-auto" {...props} />
                                                 ),
                                                 // Blockquotes
                                                 blockquote: ({ node, ...props }) => (
                                                     <blockquote
-                                                        style={{
-                                                            margin: '0 0 12px 0',
-                                                            paddingLeft: '16px',
-                                                            borderLeft: '3px solid rgba(59, 130, 246, 0.5)',
-                                                            color: 'rgba(255, 255, 255, 0.8)',
-                                                            fontStyle: 'italic',
-                                                        }}
+                                                        className="m-0 mb-3 pl-4 border-l-[3px] border-blue-500/50 text-white/80 italic"
                                                         {...props}
                                                     />
                                                 ),
                                                 // Strong/Bold
                                                 strong: ({ node, ...props }) => (
-                                                    <strong style={{ fontWeight: '600', color: '#ffffff' }} {...props} />
+                                                    <strong className="font-semibold text-white" {...props} />
                                                 ),
                                                 // Emphasis/Italic
                                                 em: ({ node, ...props }) => (
-                                                    <em style={{ fontStyle: 'italic', color: '#ffffff' }} {...props} />
+                                                    <em className="italic text-white" {...props} />
                                                 ),
                                                 // Horizontal rule
                                                 hr: ({ node, ...props }) => (
-                                                    <hr style={{ border: 'none', borderTop: '1px solid rgba(255, 255, 255, 0.1)', margin: '16px 0' }} {...props} />
+                                                    <hr className="border-none border-t border-white/10 my-4" {...props} />
                                                 ),
                                             }}
                                         >
@@ -444,16 +307,7 @@ export function ChatInterface({ aiService, onClose }: ChatInterfaceProps) {
                         </div>
 
                         {message.functionCalls && message.functionCalls.length > 0 && (
-                            <div
-                                style={{
-                                    fontSize: '10px',
-                                    color: 'rgba(255, 255, 255, 0.5)',
-                                    padding: '4px 8px',
-                                    backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                                    borderRadius: '6px',
-                                    marginTop: '4px',
-                                }}
-                            >
+                            <div className="text-[10px] text-white/50 px-2 py-1 bg-blue-500/15 rounded-md mt-1">
                                 {message.functionCalls.map((fc, idx) => (
                                     <div key={idx}>
                                         {fc.name}: {fc.result.message}
@@ -468,31 +322,14 @@ export function ChatInterface({ aiService, onClose }: ChatInterfaceProps) {
             </div>
 
             {/* Input */}
-            <div
-                style={{
-                    padding: '14px 16px',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                }}
-            >
-                <div style={{
-                    display: 'flex',
-                    gap: '0',
-                    alignItems: 'stretch',
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    overflow: 'hidden',
-                    transition: 'all 0.2s',
-                }}
-                    onFocus={(e) => {
-                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
-                    }}
+            <div className="px-4 py-3.5 border-t border-white/10 bg-black/30">
+                <div
+                    className={clsx(
+                        'flex gap-0 items-stretch',
+                        'bg-white/8 rounded-xl border border-white/12 overflow-hidden',
+                        'transition-all duration-200',
+                        'focus-within:border-blue-500/50 focus-within:bg-white/10'
+                    )}
                 >
                     <input
                         ref={inputRef}
@@ -502,89 +339,34 @@ export function ChatInterface({ aiService, onClose }: ChatInterfaceProps) {
                         onKeyPress={handleKeyPress}
                         placeholder="Message..."
                         disabled={isLoading}
-                        style={{
-                            flex: 1,
-                            padding: '10px 16px',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            color: '#ffffff',
-                            fontSize: '13px',
-                            outline: 'none',
-                            fontFamily: 'inherit',
-                        }}
-                        onFocus={(e) => {
-                            const container = e.currentTarget.parentElement;
-                            if (container) {
-                                container.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-                                container.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                            }
-                        }}
-                        onBlur={(e) => {
-                            const container = e.currentTarget.parentElement;
-                            if (container) {
-                                container.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-                                container.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
-                            }
-                        }}
+                        className={clsx(
+                            'flex-1 px-4 py-2.5',
+                            'bg-transparent border-none text-white text-[13px] outline-none',
+                            'font-inherit placeholder:text-white/40'
+                        )}
                     />
-                    <div style={{
-                        width: '1px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                        margin: '8px 0',
-                    }} />
+                    <div className="w-px bg-white/8 my-2" />
                     <button
                         onClick={handleSend}
                         disabled={!input.trim() || isLoading}
-                        style={{
-                            padding: '0 16px',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            color: isLoading || !input.trim() ? 'rgba(255, 255, 255, 0.25)' : '#3b82f6',
-                            fontSize: '13px',
-                            fontWeight: '500',
-                            cursor: isLoading || !input.trim() ? 'not-allowed' : 'pointer',
-                            transition: 'all 0.15s',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            minWidth: '60px',
-                        }}
-                        onMouseEnter={(e) => {
-                            if (!isLoading && input.trim()) {
-                                e.currentTarget.style.color = '#2563eb';
-                            }
-                        }}
-                        onMouseLeave={(e) => {
-                            if (!isLoading && input.trim()) {
-                                e.currentTarget.style.color = '#3b82f6';
-                            }
-                        }}
+                        className={clsx(
+                            'px-4 bg-transparent border-none',
+                            'text-[13px] font-medium',
+                            'transition-all duration-150',
+                            'flex items-center justify-center min-w-[60px]',
+                            isLoading || !input.trim()
+                                ? 'text-white/25 cursor-not-allowed'
+                                : 'text-blue-500 cursor-pointer hover:text-blue-600'
+                        )}
                     >
                         {isLoading ? (
-                            <div style={{
-                                width: '14px',
-                                height: '14px',
-                                border: '2px solid rgba(59, 130, 246, 0.3)',
-                                borderTopColor: '#3b82f6',
-                                borderRadius: '50%',
-                                animation: 'spin 0.7s linear infinite',
-                            }} />
+                            <div className="w-3.5 h-3.5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-[spin_0.7s_linear_infinite]" />
                         ) : (
                             'Send'
                         )}
                     </button>
                 </div>
             </div>
-
-            <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        .markdown-content > *:last-child {
-          margin-bottom: 0 !important;
-        }
-      `}</style>
         </div>
     );
 }
-

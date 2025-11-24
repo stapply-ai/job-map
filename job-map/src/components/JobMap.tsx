@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useImperativeHandle, forwardRef } from 'react';
 import Map, { Marker, Popup, NavigationControl, FullscreenControl } from 'react-map-gl/mapbox';
+import clsx from 'clsx';
 import type { JobMarker } from '../types';
 import { StatsOverlay } from './StatsOverlay';
 import type { MapControlCallbacks, ViewState } from '../utils/mapControl';
@@ -279,8 +280,8 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
     // Ensure map always renders, even with 0 jobs
     if (!mapboxToken) {
       return (
-        <div style={{ width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f172a', color: '#ffffff' }}>
-          <div style={{ textAlign: 'center' }}>
+        <div className="w-screen h-screen flex items-center justify-center bg-black text-white">
+          <div className="text-center">
             <h2>Mapbox token missing</h2>
             <p>Please set VITE_MAPBOX_TOKEN in your .env file</p>
           </div>
@@ -296,102 +297,40 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
     });
 
     return (
-      <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      <div className="w-screen h-screen relative">
         <StatsOverlay
           totalJobs={totalJobs || jobs.length}
           displayedJobs={displayJobs.length}
           totalLocations={uniqueLocations}
+          popupOpen={!!popupJob}
         />
 
         {isLoadingMore && loadingProgress && (
-          <div style={{
-            position: 'absolute',
-            bottom: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            backdropFilter: 'blur(20px)',
-            padding: '14px 24px',
-            borderRadius: '12px',
-            color: '#ffffff',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            zIndex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            minWidth: '240px',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", sans-serif'
-          }}>
-            <div style={{
-              width: '14px',
-              height: '14px',
-              border: '2px solid rgba(59, 130, 246, 0.3)',
-              borderTopColor: '#3b82f6',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
-            }} />
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontSize: '12px',
-                color: 'rgba(255, 255, 255, 0.9)',
-                marginBottom: '6px',
-                fontWeight: '500'
-              }}>
+          <div className={clsx(
+            'absolute bottom-6 left-1/2 -translate-x-1/2 z-1',
+            'bg-black/50 backdrop-blur-[20px]',
+            'px-6 py-3.5 rounded-xl',
+            'text-white border border-white/10',
+            'flex items-center gap-3 min-w-[240px]',
+            'font-[system-ui,-apple-system,BlinkMacSystemFont,"Inter",sans-serif]'
+          )}>
+            <div className="w-3.5 h-3.5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+            <div className="flex-1">
+              <div className="text-xs text-white/90 mb-1.5 font-medium">
                 Loading jobs
               </div>
-              <div style={{
-                width: '100%',
-                height: '3px',
-                backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                borderRadius: '2px',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${(loadingProgress.current / loadingProgress.total) * 100}%`,
-                  height: '100%',
-                  backgroundColor: '#3b82f6',
-                  transition: 'width 0.3s ease',
-                  boxShadow: '0 0 8px rgba(59, 130, 246, 0.5)'
-                }} />
+              <div className="w-full h-[3px] bg-blue-500/15 rounded-sm overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 transition-[width] duration-300 ease-in-out shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                  style={{ width: `${(loadingProgress.current / loadingProgress.total) * 100}%` }}
+                />
               </div>
-              <div style={{
-                fontSize: '10px',
-                color: 'rgba(255, 255, 255, 0.4)',
-                marginTop: '4px',
-                fontVariantNumeric: 'tabular-nums'
-              }}>
+              <div className="text-[10px] text-white/40 mt-1 tabular-nums">
                 {loadingProgress.current} / {loadingProgress.total}
               </div>
             </div>
           </div>
         )}
-
-        <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes pulse {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 0.2;
-          }
-          50% {
-            transform: scale(1.1);
-            opacity: 0.3;
-          }
-        }
-        .mapboxgl-popup-content {
-          background: transparent !important;
-          padding: 0 !important;
-          box-shadow: none !important;
-        }
-        .mapboxgl-popup-tip {
-          display: none !important;
-        }
-        .custom-popup .mapboxgl-popup-content {
-          background: transparent !important;
-        }
-      `}</style>
 
         <Map
           {...viewState}
@@ -430,12 +369,8 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
               >
                 {cluster.isCluster ? (
                   <div
-                    style={{
-                      position: 'relative',
-                      width: size,
-                      height: size,
-                      cursor: 'pointer',
-                    }}
+                    className="relative cursor-pointer"
+                    style={{ width: size, height: size }}
                     onMouseEnter={(e) => {
                       const inner = e.currentTarget.querySelector('.marker-inner') as HTMLElement;
                       if (inner) inner.style.transform = 'scale(1.15)';
@@ -446,34 +381,25 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
                     }}
                   >
                     {/* Pulsing ring */}
-                    <div style={{
-                      position: 'absolute',
-                      inset: '-8px',
-                      borderRadius: '50%',
-                      backgroundColor: color,
-                      opacity: 0.2,
-                      animation: 'pulse 2s ease-in-out infinite',
-                    }} />
+                    <div
+                      className="absolute -inset-2 rounded-full opacity-20 animate-pulse"
+                      style={{ backgroundColor: color }}
+                    />
 
                     {/* Main marker */}
                     <div
-                      className="marker-inner"
+                      className={clsx(
+                        'marker-inner',
+                        'relative w-full h-full rounded-full',
+                        'bg-black/80 flex items-center justify-center',
+                        'font-semibold text-[13px] tabular-nums',
+                        'transition-transform duration-200 ease-in-out',
+                        'shadow-[0_4px_12px_rgba(0,0,0,0.4)]'
+                      )}
                       style={{
-                        position: 'relative',
-                        width: '100%',
-                        height: '100%',
-                        borderRadius: '50%',
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
                         border: `2px solid ${color}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: '600',
                         color: color,
-                        fontSize: '13px',
                         boxShadow: `0 0 20px ${color}40, 0 4px 12px rgba(0, 0, 0, 0.4)`,
-                        transition: 'transform 0.2s ease',
-                        fontVariantNumeric: 'tabular-nums',
                       }}
                     >
                       {cluster.jobs.length}
@@ -481,10 +407,7 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
                   </div>
                 ) : (
                   <div
-                    style={{
-                      position: 'relative',
-                      cursor: 'pointer',
-                    }}
+                    className="relative cursor-pointer"
                     onMouseEnter={(e) => {
                       const dot = e.currentTarget.querySelector('.marker-dot') as HTMLElement;
                       if (dot) dot.style.transform = 'scale(1.3)';
@@ -496,29 +419,16 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
                   >
                     {/* Single job marker - minimalist dot */}
                     <div
-                      className="marker-dot"
+                      className="marker-dot rounded-full border-2 border-black/50 transition-transform duration-200 ease-in-out"
                       style={{
                         width: size,
                         height: size,
-                        borderRadius: '50%',
                         backgroundColor: color,
                         boxShadow: `0 0 12px ${color}80, 0 2px 8px rgba(0, 0, 0, 0.3)`,
-                        transition: 'transform 0.2s ease',
-                        border: '2px solid rgba(0, 0, 0, 0.5)',
                       }}
                     />
                     {/* Inner glow */}
-                    <div style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: '#ffffff',
-                      opacity: 0.8,
-                    }} />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white opacity-80" />
                   </div>
                 )}
               </Marker>
@@ -536,163 +446,76 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
               offset={15}
               className="custom-popup"
             >
-              <div style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '12px',
-                padding: '20px',
-                minWidth: '300px',
-                maxWidth: '360px',
-                color: '#ffffff',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", sans-serif',
-                position: 'relative',
-              }}>
+              <div className={clsx(
+                'popup-content',
+                'bg-black/90 backdrop-blur-[20px]',
+                'border border-white/10 rounded-xl p-5',
+                'min-w-[300px] max-w-[360px] w-[300px] h-[280px]',
+                'text-white font-[system-ui,-apple-system,BlinkMacSystemFont,"Inter",sans-serif]',
+                'relative flex flex-col box-border'
+              )}>
                 {/* Close button */}
                 <button
                   onClick={handleClosePopup}
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: 'none',
-                    borderRadius: '6px',
-                    width: '28px',
-                    height: '28px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    fontSize: '18px',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-                    e.currentTarget.style.color = '#ffffff';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
-                  }}
+                  className={clsx(
+                    'absolute top-3 right-3 z-1',
+                    'bg-white/10 border-none rounded-md',
+                    'w-7 h-7 flex items-center justify-center cursor-pointer',
+                    'text-white/60 text-lg transition-all duration-200',
+                    'hover:bg-white/20 hover:text-white'
+                  )}
                 >
                   ×
                 </button>
 
-                {/* Multiple jobs indicator and navigation */}
-                {popupJobsAtLocation.length > 1 && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '12px',
-                    paddingRight: '32px',
-                  }}>
-                    <div style={{
-                      fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      fontWeight: '500',
-                    }}>
-                      {currentJobIndex + 1} of {popupJobsAtLocation.length} jobs here
-                    </div>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <button
-                        onClick={handlePrevJob}
-                        title="Previous job (←)"
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '6px',
-                          width: '32px',
-                          height: '32px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          color: '#ffffff',
-                          fontSize: '16px',
-                          transition: 'all 0.2s',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
-                          e.currentTarget.style.borderColor = '#3b82f6';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                        }}
-                      >
-                        ←
-                      </button>
-                      <button
-                        onClick={handleNextJob}
-                        title="Next job (→)"
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '6px',
-                          width: '32px',
-                          height: '32px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          color: '#ffffff',
-                          fontSize: '16px',
-                          transition: 'all 0.2s',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
-                          e.currentTarget.style.borderColor = '#3b82f6';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                        }}
-                      >
-                        →
-                      </button>
-                    </div>
+                {/* Multiple jobs indicator and navigation - always reserve space */}
+                <div
+                  className={clsx(
+                    'flex items-center justify-between mb-3 pr-8 h-8',
+                    popupJobsAtLocation.length > 1 ? 'visible' : 'invisible'
+                  )}
+                >
+                  <div className="text-[11px] text-white/50 font-medium">
+                    {currentJobIndex + 1} of {popupJobsAtLocation.length} jobs here
                   </div>
-                )}
+                  <div className="flex gap-1">
+                    <button
+                      onClick={handlePrevJob}
+                      title="Previous job (←)"
+                      className={clsx(
+                        'bg-white/10 border border-white/20 rounded-md',
+                        'w-8 h-8 flex items-center justify-center cursor-pointer',
+                        'text-white text-base transition-all duration-200',
+                        'hover:bg-blue-500/20 hover:border-blue-500'
+                      )}
+                    >
+                      ←
+                    </button>
+                    <button
+                      onClick={handleNextJob}
+                      title="Next job (→)"
+                      className={clsx(
+                        'bg-white/10 border border-white/20 rounded-md',
+                        'w-8 h-8 flex items-center justify-center cursor-pointer',
+                        'text-white text-base transition-all duration-200',
+                        'hover:bg-blue-500/20 hover:border-blue-500'
+                      )}
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
 
-                <div style={{
-                  fontSize: '11px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                  color: 'rgba(255, 255, 255, 0.4)',
-                  marginBottom: '8px',
-                  fontWeight: '500'
-                }}>
+                <div className="text-[11px] uppercase tracking-wider text-white/40 mb-2 font-medium h-3.5 overflow-hidden text-ellipsis whitespace-nowrap">
                   {popupJob.company}
                 </div>
 
-                <h3 style={{
-                  margin: '0 0 16px 0',
-                  fontSize: '18px',
-                  fontWeight: '500',
-                  color: '#ffffff',
-                  lineHeight: '1.4',
-                  paddingRight: '20px'
-                }}>
+                <h3 className="m-0 mb-4 text-lg font-medium text-white leading-snug pr-5 h-[50px] overflow-hidden line-clamp-2 wrap-break-word">
                   {popupJob.title}
                 </h3>
 
-                <div style={{
-                  fontSize: '13px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  marginBottom: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
-                  <div style={{
-                    width: '4px',
-                    height: '4px',
-                    borderRadius: '50%',
-                    backgroundColor: '#3b82f6'
-                  }} />
+                <div className="text-[13px] text-white/50 mb-5 flex items-center gap-1.5 h-5 overflow-hidden text-ellipsis whitespace-nowrap">
+                  <div className="w-1 h-1 rounded-full bg-blue-500 shrink-0" />
                   {popupJob.location}
                 </div>
 
@@ -700,34 +523,16 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
                   href={popupJob.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    padding: '12px 20px',
-                    backgroundColor: '#3b82f6',
-                    color: '#000000',
-                    textDecoration: 'none',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    transition: 'all 0.2s',
-                    border: 'none',
-                    width: '100%',
-                    letterSpacing: '0.02em'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#60a5fa';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#3b82f6';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
+                  className={clsx(
+                    'flex items-center justify-center gap-2',
+                    'px-5 py-3 bg-blue-500 text-black no-underline rounded-lg',
+                    'text-[13px] font-semibold border-none w-full tracking-wide',
+                    'h-11 shrink-0 transition-all duration-200',
+                    'hover:bg-blue-400 hover:-translate-y-px'
+                  )}
                 >
                   View Job
-                  <span style={{ fontSize: '16px' }}>→</span>
+                  <span className="text-base">→</span>
                 </a>
               </div>
             </Popup>

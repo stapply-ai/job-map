@@ -25,3 +25,4 @@ dist-ssr
 .vercel
 
 public/jobs.csv
+.env*.local

@@ -35,3 +35,10 @@ map
 
 # Cloned Chrome profiles (contains sensitive cookies/data)
 user_data/
+
+ai*.csv
+new_ai*.csv
+full_pipeline.sh
+posted_jobs.json
+hourly_thread.txt
+daily_thread.txt

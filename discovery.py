@@ -19,43 +19,41 @@ PLATFORMS = {
         "domains": ["jobs.ashbyhq.com"],
         "pattern": r"(https://jobs\.ashbyhq\.com/[^/?#]+)",
         "csv_column": "ashby_url",
-        "output_file": "ashby/companies.csv"
+        "output_file": "ashby/companies.csv",
     },
     "greenhouse": {
         "domains": ["job-boards.greenhouse.io", "boards.greenhouse.io"],
         "pattern": r"(https://(?:job-boards|boards)\.greenhouse\.io/[^/?#]+)",
         "csv_column": "greenhouse_url",
-        "output_file": "greenhouse/greenhouse_companies.csv"
+        "output_file": "greenhouse/greenhouse_companies.csv",
     },
     "lever": {
         "domains": ["jobs.lever.co"],
         "pattern": r"(https://jobs\.lever\.co/[^/?#]+)",
         "csv_column": "lever_url",
-        "output_file": "lever/lever_companies.csv"
+        "output_file": "lever/lever_companies.csv",
     },
     "workable": {
         "domains": ["apply.workable.com", "jobs.workable.com"],
         "pattern": [
             r"(https://apply\.workable\.com/[^/?#]+)",
-            r"(https://jobs\.workable\.com/company/[^/?#]+/[^/?#]+)"
+            r"(https://jobs\.workable\.com/company/[^/?#]+/[^/?#]+)",
         ],
         "csv_column": "workable_url",
-        "output_file": "workable/workable_companies.csv"
-    }
+        "output_file": "workable/workable_companies.csv",
+    },
 }
 
 # Search query strategies to find more companies
 SEARCH_STRATEGIES = [
     # Basic site search
     lambda domain: f"site:{domain}",
-
     # Job-related searches
     lambda domain: f"site:{domain} careers",
     lambda domain: f"site:{domain} jobs",
     lambda domain: f"site:{domain} hiring",
-    lambda domain: f"site:{domain} \"we're hiring\"",
+    lambda domain: f'site:{domain} "we\'re hiring"',
     lambda domain: f"site:{domain} apply now",
-
     # Role-based searches (helps find niche companies)
     lambda domain: f"site:{domain} software engineer",
     lambda domain: f"site:{domain} product manager",
@@ -63,55 +61,52 @@ SEARCH_STRATEGIES = [
     lambda domain: f"site:{domain} designer",
     lambda domain: f"site:{domain} sales",
     lambda domain: f"site:{domain} marketing",
-    lambda domain: f"site:{domain} \"engineering\"",
-    lambda domain: f"site:{domain} \"product\"",
-    lambda domain: f"site:{domain} \"data\"",
-    lambda domain: f"site:{domain} \"design\"",
-    lambda domain: f"site:{domain} \"sales\"",
-    lambda domain: f"site:{domain} \"marketing\"",
-
+    lambda domain: f'site:{domain} "engineering"',
+    lambda domain: f'site:{domain} "product"',
+    lambda domain: f'site:{domain} "data"',
+    lambda domain: f'site:{domain} "design"',
+    lambda domain: f'site:{domain} "sales"',
+    lambda domain: f'site:{domain} "marketing"',
     # Remote/location searches
     lambda domain: f"site:{domain} remote",
-    lambda domain: f"site:{domain} \"San Francisco\"",
-    lambda domain: f"site:{domain} \"New York\"",
-    lambda domain: f"site:{domain} \"London\"",
-    lambda domain: f"site:{domain} \"Paris\"",
-    lambda domain: f"site:{domain} \"Berlin\"",
-    lambda domain: f"site:{domain} \"Amsterdam\"",
-    lambda domain: f"site:{domain} \"Stockholm\"",
-    lambda domain: f"site:{domain} \"Warsaw\"",
-    lambda domain: f"site:{domain} \"Brussels\"",
-    lambda domain: f"site:{domain} \"Zurich\"",
-    lambda domain: f"site:{domain} \"Delhi\"",
-    lambda domain: f"site:{domain} \"Mumbai\"",
-    lambda domain: f"site:{domain} \"Bangalore\"",
-    lambda domain: f"site:{domain} \"Chennai\"",
-    lambda domain: f"site:{domain} \"Hyderabad\"",
-    lambda domain: f"site:{domain} \"Pune\"",
-    lambda domain: f"site:{domain} \"Kolkata\"",
-    lambda domain: f"site:{domain} \"Jaipur\"",
-    lambda domain: f"site:{domain} \"Singapore\"",
-    lambda domain: f"site:{domain} \"Dubai\"",
-    lambda domain: f"site:{domain} \"Tokyo\"",
-    lambda domain: f"site:{domain} \"Seoul\"",
-    lambda domain: f"site:{domain} \"Hong Kong\"",
-    lambda domain: f"site:{domain} \"Toronto\"",
-    lambda domain: f"site:{domain} \"Montreal\"",
-    lambda domain: f"site:{domain} \"Vancouver\"",
-    lambda domain: f"site:{domain} \"Sydney\"",
-
-    lambda domain: f"site:{domain} \"Europe\"",
-    lambda domain: f"site:{domain} \"Asia\"",
-    lambda domain: f"site:{domain} \"Middle East\"",
-    lambda domain: f"site:{domain} \"North America\"",
-    lambda domain: f"site:{domain} \"South America\"",
-
+    lambda domain: f'site:{domain} "San Francisco"',
+    lambda domain: f'site:{domain} "New York"',
+    lambda domain: f'site:{domain} "London"',
+    lambda domain: f'site:{domain} "Paris"',
+    lambda domain: f'site:{domain} "Berlin"',
+    lambda domain: f'site:{domain} "Amsterdam"',
+    lambda domain: f'site:{domain} "Stockholm"',
+    lambda domain: f'site:{domain} "Warsaw"',
+    lambda domain: f'site:{domain} "Brussels"',
+    lambda domain: f'site:{domain} "Zurich"',
+    lambda domain: f'site:{domain} "Delhi"',
+    lambda domain: f'site:{domain} "Mumbai"',
+    lambda domain: f'site:{domain} "Bangalore"',
+    lambda domain: f'site:{domain} "Chennai"',
+    lambda domain: f'site:{domain} "Hyderabad"',
+    lambda domain: f'site:{domain} "Pune"',
+    lambda domain: f'site:{domain} "Kolkata"',
+    lambda domain: f'site:{domain} "Jaipur"',
+    lambda domain: f'site:{domain} "Singapore"',
+    lambda domain: f'site:{domain} "Dubai"',
+    lambda domain: f'site:{domain} "Tokyo"',
+    lambda domain: f'site:{domain} "Seoul"',
+    lambda domain: f'site:{domain} "Hong Kong"',
+    lambda domain: f'site:{domain} "Toronto"',
+    lambda domain: f'site:{domain} "Montreal"',
+    lambda domain: f'site:{domain} "Vancouver"',
+    lambda domain: f'site:{domain} "Sydney"',
+    lambda domain: f'site:{domain} "Europe"',
+    lambda domain: f'site:{domain} "Asia"',
+    lambda domain: f'site:{domain} "Middle East"',
+    lambda domain: f'site:{domain} "North America"',
+    lambda domain: f'site:{domain} "South America"',
     # Company type searches
     lambda domain: f"site:{domain} startup",
-    lambda domain: f"site:{domain} YC OR \"Y Combinator\"",
+    lambda domain: f'site:{domain} YC OR "Y Combinator"',
     lambda domain: f"site:{domain} series A OR series B",
-    lambda domain: f"site:{domain} \"tech startup\"",
-    lambda domain: f"site:{domain} \"tech company\"",
+    lambda domain: f'site:{domain} "tech startup"',
+    lambda domain: f'site:{domain} "tech company"',
 ]
 
 
@@ -121,19 +116,24 @@ def read_existing_urls(csv_file: str, column_name: str) -> Set[str]:
     if os.path.exists(csv_file):
         try:
             df = pd.read_csv(csv_file)
-            if column_name in df.columns:
-                existing_urls = set(df[column_name].dropna().tolist())
-                print(f"📖 Found {len(existing_urls)} existing URLs in {csv_file}")
-            elif "url" in df.columns:
-                # Handle legacy format
+            # New format: name,url
+            if "url" in df.columns:
                 existing_urls = set(df["url"].dropna().tolist())
-                print(f"📖 Found {len(existing_urls)} existing URLs in {csv_file} (legacy format)")
+                print(f"📖 Found {len(existing_urls)} existing URLs in {csv_file}")
+            # Legacy format: specific column name
+            elif column_name in df.columns:
+                existing_urls = set(df[column_name].dropna().tolist())
+                print(
+                    f"📖 Found {len(existing_urls)} existing URLs in {csv_file} (legacy format)"
+                )
         except Exception as e:
             print(f"⚠️  Error reading {csv_file}: {e}")
     return existing_urls
 
 
-def extract_urls_from_link(link: str, patterns: List[str] | str, domains: List[str]) -> Set[str]:
+def extract_urls_from_link(
+    link: str, patterns: List[str] | str, domains: List[str]
+) -> Set[str]:
     """Extract company URLs from a search result link"""
     urls = set()
 
@@ -158,7 +158,7 @@ def fetch_urls_with_strategies(
     domains: List[str],
     patterns: List[str] | str,
     pages_per_strategy: int = 10,
-    max_strategies: int = None
+    max_strategies: int = None,
 ) -> Set[str]:
     """Fetch URLs using multiple search strategies"""
 
@@ -169,10 +169,14 @@ def fetch_urls_with_strategies(
         print("⚠️  SERPAPI_API_KEY not found in environment")
         return all_urls
 
-    strategies_to_use = SEARCH_STRATEGIES[:max_strategies] if max_strategies else SEARCH_STRATEGIES
+    strategies_to_use = (
+        SEARCH_STRATEGIES[:max_strategies] if max_strategies else SEARCH_STRATEGIES
+    )
 
     print(f"\n🔍 Starting discovery for {platform}")
-    print(f"📊 Using {len(strategies_to_use)} search strategies with {pages_per_strategy} pages each")
+    print(
+        f"📊 Using {len(strategies_to_use)} search strategies with {pages_per_strategy} pages each"
+    )
 
     for strategy_idx, strategy_func in enumerate(strategies_to_use, 1):
         # Try strategy with each domain
@@ -210,7 +214,9 @@ def fetch_urls_with_strategies(
                     new_in_page = page_urls - all_urls - strategy_urls
                     strategy_urls.update(page_urls)
 
-                    print(f"  Page {page + 1}: +{len(new_in_page)} new ({len(page_urls)} total on page)")
+                    print(
+                        f"  Page {page + 1}: +{len(new_in_page)} new ({len(page_urls)} total on page)"
+                    )
 
                     # Small delay to avoid rate limiting
                     time.sleep(0.5)
@@ -222,7 +228,9 @@ def fetch_urls_with_strategies(
             new_from_strategy = strategy_urls - all_urls
             all_urls.update(strategy_urls)
 
-            print(f"  Strategy total: +{len(new_from_strategy)} new URLs (cumulative: {len(all_urls)})")
+            print(
+                f"  Strategy total: +{len(new_from_strategy)} new URLs (cumulative: {len(all_urls)})"
+            )
 
             # Delay between domains
             time.sleep(1)
@@ -230,8 +238,45 @@ def fetch_urls_with_strategies(
     return all_urls
 
 
-def save_to_csv(urls: Set[str], existing_urls: Set[str], output_file: str, column_name: str):
-    """Save URLs to CSV, handling duplicates with existing data"""
+def extract_company_slug_from_url(url: str, platform: str) -> str:
+    """Extract company slug from URL and format as name"""
+    from urllib.parse import urlparse
+    import re
+
+    parsed = urlparse(url)
+    path = parsed.path.lstrip("/")
+
+    if platform == "ashby":
+        # https://jobs.ashbyhq.com/{slug}
+        slug = path
+    elif platform == "greenhouse":
+        # https://job-boards.greenhouse.io/{slug}
+        slug = path
+    elif platform == "lever":
+        # https://jobs.lever.co/{slug}
+        slug = path
+    elif platform == "workable":
+        # https://apply.workable.com/{slug}
+        slug = path
+    else:
+        slug = path.split("/")[0] if path else "unknown"
+
+    # Format slug as name: replace hyphens with spaces and title case
+    from urllib.parse import unquote
+
+    decoded = unquote(slug)
+    spaced = decoded.replace("-", " ").replace("_", " ")
+    return spaced.title()
+
+
+def save_to_csv(
+    urls: Set[str],
+    existing_urls: Set[str],
+    output_file: str,
+    column_name: str,
+    platform: str = None,
+):
+    """Save URLs to CSV with name and url columns, handling duplicates with existing data"""
 
     # Combine new and existing URLs
     all_urls = existing_urls.union(urls)
@@ -240,7 +285,11 @@ def save_to_csv(urls: Set[str], existing_urls: Set[str], output_file: str, colum
     print(f"\n📈 Results:")
     print(f"  🆕 New URLs found: {len(new_urls)}")
     print(f"  📊 Total unique URLs: {len(all_urls)}")
-    print(f"  📈 Growth: +{len(new_urls)} ({len(new_urls)/len(existing_urls)*100:.1f}% increase)" if existing_urls else "")
+    print(
+        f"  📈 Growth: +{len(new_urls)} ({len(new_urls) / len(existing_urls) * 100:.1f}% increase)"
+        if existing_urls
+        else ""
+    )
 
     if new_urls:
         print(f"\n🎉 Sample of new URLs (showing first 20):")
@@ -250,16 +299,35 @@ def save_to_csv(urls: Set[str], existing_urls: Set[str], output_file: str, colum
         if len(new_urls) > 20:
             print(f"  ... and {len(new_urls) - 20} more")
 
-    # Save to CSV
-    df = pd.DataFrame({column_name: sorted(all_urls)})
+    # Read existing data to preserve names if they exist
+    existing_data = {}
+    if os.path.exists(output_file):
+        try:
+            df_existing = pd.read_csv(output_file)
+            if "url" in df_existing.columns and "name" in df_existing.columns:
+                for _, row in df_existing.iterrows():
+                    if pd.notna(row.get("url")):
+                        existing_data[row["url"]] = row.get("name", "")
+        except Exception:
+            pass
+
+    # Create DataFrame with name and url columns
+    rows = []
+    for url in sorted(all_urls):
+        # Use existing name if available, otherwise generate from URL
+        if url in existing_data and existing_data[url]:
+            name = existing_data[url]
+        else:
+            name = extract_company_slug_from_url(url, platform or "")
+        rows.append({"name": name, "url": url})
+
+    df = pd.DataFrame(rows)
     df.to_csv(output_file, index=False)
     print(f"\n✅ Saved {len(df)} companies to {output_file}")
 
 
 def discover_platform(
-    platform_name: str,
-    pages_per_strategy: int = 10,
-    max_strategies: int = None
+    platform_name: str, pages_per_strategy: int = 10, max_strategies: int = None
 ):
     """Run enhanced discovery for a specific platform"""
 
@@ -279,11 +347,17 @@ def discover_platform(
         domains=config["domains"],
         patterns=config["pattern"],
         pages_per_strategy=pages_per_strategy,
-        max_strategies=max_strategies
+        max_strategies=max_strategies,
     )
 
     # Save results
-    save_to_csv(new_urls, existing_urls, config["output_file"], config["csv_column"])
+    save_to_csv(
+        new_urls,
+        existing_urls,
+        config["output_file"],
+        config["csv_column"],
+        platform_name,
+    )
 
 
 def discover_all_platforms(pages_per_strategy: int = 10, max_strategies: int = 5):
@@ -309,29 +383,32 @@ def discover_all_platforms(pages_per_strategy: int = 10, max_strategies: int = 5
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Enhanced company discovery across ATS platforms")
+    parser = argparse.ArgumentParser(
+        description="Enhanced company discovery across ATS platforms"
+    )
     parser.add_argument(
         "--platform",
         choices=list(PLATFORMS.keys()) + ["all"],
         default="all",
-        help="Platform to discover (default: all)"
+        help="Platform to discover (default: all)",
     )
     parser.add_argument(
-        "--pages",
-        type=int,
-        default=10,
-        help="Pages per search strategy (default: 10)"
+        "--pages", type=int, default=10, help="Pages per search strategy (default: 10)"
     )
     parser.add_argument(
         "--strategies",
         type=int,
         default=5,
-        help="Max number of search strategies to use (default: 5, max: 55)"
+        help="Max number of search strategies to use (default: 5, max: 55)",
     )
 
     args = parser.parse_args()
 
     if args.platform == "all":
-        discover_all_platforms(pages_per_strategy=args.pages, max_strategies=args.strategies)
+        discover_all_platforms(
+            pages_per_strategy=args.pages, max_strategies=args.strategies
+        )
     else:
-        discover_platform(args.platform, pages_per_strategy=args.pages, max_strategies=args.strategies)
+        discover_platform(
+            args.platform, pages_per_strategy=args.pages, max_strategies=args.strategies
+        )

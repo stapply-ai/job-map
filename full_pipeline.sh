@@ -27,6 +27,11 @@ run_workable() {
   "$PYTHON" "$PROJECT_ROOT/workable/export_to_csv.py"
 }
 
+run_google() {
+  "$PYTHON" "$PROJECT_ROOT/google/main.py"
+  "$PYTHON" "$PROJECT_ROOT/google/export_to_csv.py"
+}
+
 run_ai() {
   "$PYTHON" "$PROJECT_ROOT/ai.py"
   cd "$PROJECT_ROOT/map"
@@ -52,6 +57,9 @@ case "$JOB" in
   workable)
     run_workable
     ;;
+  google)
+    run_google
+    ;;
   ai)
     run_ai
     ;;
@@ -60,10 +68,11 @@ case "$JOB" in
     run_greenhouse
     run_lever
     run_workable
+    run_google
     run_ai
     ;;
   *)
-    echo "Usage: $0 {ashby|greenhouse|lever|workable|ai|all}"
+    echo "Usage: $0 {ashby|greenhouse|lever|workable|google|ai|all}"
     exit 1
     ;;
 esac

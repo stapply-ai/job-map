@@ -39,3 +39,5 @@ full_pipeline.sh
 posted_jobs.json
 hourly_thread.txt
 daily_thread.txt
+map/**
+.DS_Store

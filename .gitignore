@@ -45,3 +45,5 @@ map/**
 **/*.txt
 **/*.json
 **/*.html
+**/jobs_old.csv
+rm_ai.csv

@@ -5,7 +5,9 @@ using Ollama API with custom model euro_intern_classifier.
 """
 
 import csv
+import html
 import json
+import re
 import time
 import requests
 from typing import Dict, List, Optional, Tuple
@@ -70,6 +72,92 @@ def save_checkpoint(checkpoint: Dict):
         print(f"⚠️  Error saving checkpoint: {e}")
 
 
+def combine_lever_description(job: dict) -> Optional[str]:
+    """
+    Combine Lever job description from descriptionPlain, additionalPlain, and lists.
+    Returns combined description or None if no description found.
+    """
+    parts = []
+    
+    # Add descriptionPlain
+    if job.get("descriptionPlain"):
+        parts.append(job["descriptionPlain"].strip())
+    
+    # Add lists (RESPONSIBILITIES, QUALIFICATIONS, etc.)
+    if job.get("lists") and isinstance(job["lists"], list):
+        for list_item in job["lists"]:
+            if isinstance(list_item, dict):
+                header = list_item.get("text", "").strip()
+                content = list_item.get("content", "")
+                if content:
+                    # Strip HTML tags from content
+                    content_plain = re.sub(r'<[^>]+>', '', content)
+                    content_plain = content_plain.strip()
+                    if content_plain:
+                        if header:
+                            parts.append(f"\n\n{header}\n{content_plain}")
+                        else:
+                            parts.append(f"\n\n{content_plain}")
+    
+    # Add additionalPlain (often contains salary info)
+    if job.get("additionalPlain"):
+        parts.append(job["additionalPlain"].strip())
+    
+    if not parts:
+        return None
+    
+    return "\n\n".join(parts)
+
+
+def process_greenhouse_content(content: Optional[str]) -> Optional[str]:
+    """
+    Process Greenhouse job content: decode HTML entities but keep HTML tags.
+    Returns processed HTML description or None if content is empty.
+    """
+    if not content:
+        return None
+    
+    # Decode HTML entities (e.g., &lt; -> <, &quot; -> ", &nbsp; -> non-breaking space, etc.)
+    decoded = html.unescape(content)
+    
+    # Replace non-breaking spaces with regular spaces
+    decoded = decoded.replace('\xa0', ' ')
+    
+    # Clean up extra whitespace but keep HTML structure
+    decoded = re.sub(r'\n\s*\n', '\n\n', decoded)
+    decoded = decoded.strip()
+    
+    return decoded if decoded else None
+
+
+def is_lever_job(job: dict) -> bool:
+    """Detect if a job is from Lever ATS."""
+    # Check if hostedUrl contains lever.co
+    hosted_url = job.get("hostedUrl", "")
+    if hosted_url and "lever.co" in hosted_url.lower():
+        return True
+    
+    # Check for Lever-specific fields
+    if job.get("additionalPlain") is not None or job.get("lists") is not None:
+        return True
+    
+    return False
+
+
+def is_greenhouse_job(job: dict) -> bool:
+    """Detect if a job is from Greenhouse ATS."""
+    # Check if absolute_url contains greenhouse.io
+    absolute_url = job.get("absolute_url", "")
+    if absolute_url and "greenhouse.io" in absolute_url.lower():
+        return True
+    
+    # Check for Greenhouse-specific fields
+    if job.get("content") is not None:
+        return True
+    
+    return False
+
+
 def get_job_description_fast(
     job_url: str, company: str, title: str
 ) -> Tuple[Optional[str], float]:
@@ -108,22 +196,36 @@ def get_job_description_fast(
                 )
                 if job_url_field == job_url:
                     # Found by URL
-                    description = (
-                        job.get("descriptionPlain")
-                        or job.get("description")
-                        or job.get("text")
-                    )
+                    # Check job type and use appropriate extraction
+                    if is_lever_job(job):
+                        description = combine_lever_description(job)
+                    elif is_greenhouse_job(job):
+                        content = job.get("content")
+                        description = process_greenhouse_content(content)
+                    else:
+                        description = (
+                            job.get("descriptionPlain")
+                            or job.get("description")
+                            or job.get("text")
+                        )
                     if description:
                         return description.strip()[:2000]  # Limit length
 
                 # Check title match as fallback
                 job_title = job.get("title", "")
                 if job_title == title:
-                    description = (
-                        job.get("descriptionPlain")
-                        or job.get("description")
-                        or job.get("text")
-                    )
+                    # Check job type and use appropriate extraction
+                    if is_lever_job(job):
+                        description = combine_lever_description(job)
+                    elif is_greenhouse_job(job):
+                        content = job.get("content")
+                        description = process_greenhouse_content(content)
+                    else:
+                        description = (
+                            job.get("descriptionPlain")
+                            or job.get("description")
+                            or job.get("text")
+                        )
                     if description:
                         elapsed = time.time() - start_time
                         return description.strip()[:2000], elapsed  # Limit length

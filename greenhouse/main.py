@@ -118,14 +118,18 @@ async def scrape_greenhouse_jobs(
         return company_data, num_jobs, False  # False = not scraped (skipped)
 
     # Log decision to scrape
-    if hours_elapsed is not None:
+    if force:
+        print(f"Forcing scrape for '{company_slug}' (force=True).")
+    elif hours_elapsed is not None:
         print(
             f"Scraped {company_slug} {hours_elapsed:.1f} hours ago. I will scrape again."
         )
     elif company_data is None:
         print(f"Company '{company_slug}' data file does not exist. I will scrape.")
-    else:
+    elif not company_data.get("last_scraped"):
         print(f"Company '{company_slug}' has no last_scraped field. I will scrape.")
+    else:
+        print(f"Company '{company_slug}' last_scraped field is invalid. I will scrape.")
 
     urls = [
         f"https://api.greenhouse.io/v1/boards/{company_slug}/jobs?content=true",

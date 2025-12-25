@@ -13,8 +13,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 # Use this proxy for all HTTP requests
-PROXY_URL = "http://core-residential.evomi.com:1000"
-PROXY_AUTH = aiohttp.BasicAuth("kalilbouz0", "KpJTWgxfN9tqIe52xIsD")
+# PROXY_URL = "http://core-residential.evomi.com:1000"
+# PROXY_AUTH = aiohttp.BasicAuth("kalilbouz0", "KpJTWgxfN9tqIe52xIsD")
 
 MAX_RETRIES = 3
 BASE_RETRY_DELAY = 2  # seconds
@@ -104,14 +104,18 @@ async def scrape_ashby_jobs(
         return file_path, num_jobs, False  # False = not scraped (skipped)
 
     # Log decision to scrape
-    if hours_elapsed is not None:
+    if force:
+        print(f"Forcing scrape for '{company_slug}' (force=True).")
+    elif hours_elapsed is not None:
         print(
             f"Scraped {company_slug} {hours_elapsed:.1f} hours ago. I will scrape again."
         )
     elif company_data is None:
         print(f"Company '{company_slug}' data file does not exist. I will scrape.")
-    else:
+    elif not company_data.get("last_scraped"):
         print(f"Company '{company_slug}' has no last_scraped field. I will scrape.")
+    else:
+        print(f"Company '{company_slug}' last_scraped field is invalid. I will scrape.")
 
     url = f"https://api.ashbyhq.com/posting-api/job-board/{company_slug}?includeCompensation=true"
     print(f"Fetching fresh data from {url}...")
@@ -122,7 +126,8 @@ async def scrape_ashby_jobs(
         while attempt <= MAX_RETRIES:
             try:
                 async with session.get(
-                    url, proxy=PROXY_URL, proxy_auth=PROXY_AUTH
+                    url,
+                    #  proxy=PROXY_URL, proxy_auth=PROXY_AUTH
                 ) as response:
                     if response.status == 404:
                         print(f"Company '{company_slug}' not found (404)")

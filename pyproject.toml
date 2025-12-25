@@ -27,4 +27,10 @@ dependencies = [
     "asyncio>=4.0.0",
     "tweepy>=4.16.0",
     "playwright-stealth>=2.0.0",
+    "torch>=2.9.1",
+    "transformers>=4.57.3",
+    "datasets>=4.4.1",
+    "numpy>=2.3.5",
+    "accelerate>=1.12.0",
+    "html2text>=2025.4.15",
 ]

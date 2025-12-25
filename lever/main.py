@@ -15,6 +15,7 @@ MAX_RETRIES = 3
 BASE_RETRY_DELAY = 2  # seconds
 MIN_SCRAPE_DELAY = 1  # seconds
 MAX_SCRAPE_DELAY = 3  # seconds
+REQUEST_TIMEOUT = 15  # seconds: abort Lever request if it hangs too long
 
 
 def extract_company_slug(url: str) -> str:
@@ -98,28 +99,37 @@ async def scrape_lever_jobs(
             f"Scraped {company_slug} {hours_elapsed:.1f} hours ago. I will not scrape again."
         )
         # Return existing data info with skipped flag
-        num_jobs = len(company_data.get("jobs", []))
+        if isinstance(company_data, dict):
+            jobs = company_data.get("jobs", [])
+        else:
+            jobs = company_data if isinstance(company_data, list) else []
+        num_jobs = len(jobs)
         return (
-            company_data.get("jobs", []),
+            jobs,
             num_jobs,
             False,
         )  # False = not scraped (skipped)
 
     # Log decision to scrape
-    if hours_elapsed is not None:
+    if force:
+        print(f"Forcing scrape for '{company_slug}' (force=True).")
+    elif hours_elapsed is not None:
         print(
             f"Scraped {company_slug} {hours_elapsed:.1f} hours ago. I will scrape again."
         )
     elif company_data is None:
         print(f"Company '{company_slug}' data file does not exist. I will scrape.")
-    else:
+    elif isinstance(company_data, dict) and not company_data.get("last_scraped"):
         print(f"Company '{company_slug}' has no last_scraped field. I will scrape.")
+    else:
+        print(f"Company '{company_slug}' last_scraped field is invalid. I will scrape.")
 
     url = f"https://api.lever.co/v0/postings/{company_slug}"
     print(f"Fetching {url}...")
 
     connector = aiohttp.TCPConnector(ssl=False)
-    async with aiohttp.ClientSession(connector=connector) as session:
+    timeout = aiohttp.ClientTimeout(total=REQUEST_TIMEOUT)
+    async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
         attempt = 1
         while attempt <= MAX_RETRIES:
             try:
@@ -143,13 +153,14 @@ async def scrape_lever_jobs(
 
                     return data, len(data), True  # True = scraped
             except (
+                asyncio.TimeoutError,
                 aiohttp.client_exceptions.ClientPayloadError,
                 aiohttp.ClientError,
                 aiohttp.http_exceptions.HttpProcessingError,
             ) as err:
                 if attempt == MAX_RETRIES:
                     print(
-                        f"Exceeded retries for '{company_slug}' due to network error: {err}"
+                        f"Exceeded retries for '{company_slug}' due to network/timeout error: {err}"
                     )
                     return None, 0, False
                 delay = BASE_RETRY_DELAY * attempt + random.uniform(0, 1)

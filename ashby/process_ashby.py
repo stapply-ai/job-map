@@ -3,7 +3,7 @@ import logging
 import time
 from pathlib import Path
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 import sys
 
 sys.path.append(str(Path(__file__).parent.parent))
@@ -36,9 +36,7 @@ Base = declarative_base()
 
 class CompanyTable(Base):
     __tablename__ = "companies"
-    id = Column(
-        PGUUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
-    )
+    id = Column(PGUUID(as_uuid=True), primary_key=True)
     name = Column(String, unique=True, nullable=False)
 
 
@@ -79,6 +77,8 @@ class JobTable(Base):
 
 def get_or_create_company(session, company_name: str) -> UUID:
     """Get existing company or create new one."""
+    # Trim company name
+    company_name = company_name.strip()
     logger.debug(f"Getting or creating company: {company_name}")
     company = session.query(CompanyTable).filter_by(name=company_name).first()
     if company:
@@ -86,7 +86,7 @@ def get_or_create_company(session, company_name: str) -> UUID:
         return company.id
 
     logger.info(f"Creating new company: {company_name}")
-    new_company = CompanyTable(name=company_name)
+    new_company = CompanyTable(id=uuid4(), name=company_name)
     session.add(new_company)
     session.commit()
     logger.info(f"Created company: {company_name} (ID: {new_company.id})")

@@ -41,3 +41,11 @@ hourly_thread.txt
 daily_thread.txt
 
 **/companies
+map/**
+.DS_Store
+
+**/*.txt
+**/*.json
+**/*.html
+**/jobs_old.csv
+rm_ai.csv

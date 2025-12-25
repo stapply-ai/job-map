@@ -1,8 +1,8 @@
-# 🚀 Stapply Map
+# 🚀 ATS Scrapers
 
 <div align="center">
 
-**An open-source map of the jobs**
+**A library of scripts to scrape jobs from ATSs**
 
 </div>
 
@@ -10,11 +10,9 @@
 
 ## Map
 
-We built a map of the jobs:
+We built a map with the data:
 
 - [Explore the interactive job map](https://map.stapply.ai)
-
-![Preview of the Stapply job map](map/public/opengraph-image.jpeg)
 
 
 ## 📊 Public Data
@@ -33,36 +31,6 @@ This CSV is updated regularly and contains job postings from all supported platf
 - **🎯 Semantic Search** - OpenAI embeddings for job title and description (Ashby)
 - **🐳 Self-Hosted Options** - Use SearXNG for unlimited discovery without API limits
 - **📝 Export Formats** - CSV exports with automatic diff tracking for new/updated jobs
-
-## 🏗️ Architecture
-
-The project follows a modular, platform-based architecture:
-
-```
-data/
-├── 📁 Platform Modules (ashby/, greenhouse/, lever/, workable/)
-│   ├── main.py              # Platform-specific scraper
-│   ├── export_to_csv.py     # CSV export utility
-│   ├── companies/           # JSON files (one per company)
-│   ├── jobs.csv             # Platform-specific job export
-│   └── *_companies.csv      # Company URL registry
-│
-├── 📁 Core Components
-│   ├── models/              # Pydantic data models for each platform
-│   ├── classifier/          # Job classification tools
-│   ├── searxng-docker/      # SearXNG self-hosted setup
-│   └── gather_jobs.py       # Job consolidation utility
-│
-├── 🔍 Discovery Scripts
-│   ├── searxng_discovery.py      # Self-hosted search (unlimited!)
-│   ├── discovery.py              # Discovery utilities
-│   └── [other discovery methods]
-│
-└── 📄 Configuration
-    ├── pyproject.toml       # Python dependencies
-    ├── env.example           # Environment variables template
-    └── README.md            # This file
-```
 
 ## 🚀 Quick Start
 
@@ -141,5 +109,4 @@ This project is open source. Contributions are welcome!
 ## 🌐 Links
 
 - **Public Jobs CSV**: https://storage.stapply.ai/jobs.csv
-- **Website**: https://stapply.ai
 - **Issues**: [GitHub Issues](https://github.com/stapply-ai/data/issues)

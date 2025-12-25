@@ -296,6 +296,11 @@ run_apple() {
   fi
 }
 
+run_workday() {
+  "$PYTHON" "$PROJECT_ROOT/workday/main.py"
+  "$PYTHON" "$PROJECT_ROOT/workday/export_to_csv.py"
+}
+
 run_ai() {
   local msg="[run_ai] Starting AI pipeline at $(date '+%Y-%m-%d %H:%M:%S')..."
   {
@@ -430,6 +435,9 @@ case "$JOB" in
       FAILED=1
     fi
     ;;
+  workday)
+    run_workday
+    ;;
   ai)
     if ! run_ai; then
       FAILED=1
@@ -441,6 +449,7 @@ case "$JOB" in
     fi
     ;;
   all)
+
     msg="[pipeline] Running full pipeline (all jobs)..."
     {
       echo "$msg"
